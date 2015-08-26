@@ -2027,16 +2027,23 @@ rownames(hm_R0_delay_percent) <- rownames(hm_R0_delay)
 colnames(hm_R0_delay_percent) <- colnames(hm_R0_delay)
 
 # create a heatmap 
-heatmap(hm_R0_delay, Rowv = NA, Colv = NA, scale = "none", main = "absolute # cases averted v1_day vs. R0", xlab = "R0", ylab = "v1_day", col = jGreensPalette)
+heatmap.2(hm_R0_delay, Rowv = FALSE, Colv = FALSE, scale = "none", 
+        main = "absolute # cases averted v1_day vs. R0",
+        xlab = "R0", ylab = "v1_day", 
+        col = jGreensPalette,
+        trace = "none", dendrogram="none", revC = TRUE, margins = c(6,8))
 max <- round(max(hm_R0_delay),2)
 text <- paste("max cases averted = ", max)
 #sometimes this has to be re-run after the rest of the script, otherwise it doesn't show
-mtext(text, side = 4, line = 9, adj = 1)
 text2 <- paste(cov[1]*100, "/", cov[2]*100, " coverage")
-mtext(text2, side = 4, line = 11, adj = 1)
+text(x = 0.5, y = 0.95, text_percent)
+text(x = 0.5, y = 0.95, text2, pos=1)
 
-heatmap(hm_R0_delay_percent, Rowv = NA, Colv = NA, scale = "none", main = "percent cases averted v1_day vs. R0", xlab = "R0", ylab = "v1_day", col = jGreensPalette)
+heatmap.2(hm_R0_delay_percent, Rowv = FALSE, Colv = FALSE, scale = "none", 
+          main = "percent cases averted v1_day vs. R0",
+          xlab = "R0", ylab = "v1_day", col = jGreensPalette,
+          trace="none", dendrogram="none", revC = TRUE, margins = c(6,8))
 max_percent <- round(max(hm_R0_delay_percent)*100,2)
 text_percent <- paste("max percent of cases averted = ", max_percent)
-mtext(text_percent, side = 4, line = 1, adj = 0)
-mtext(text2, side = 4)
+text(x = 0.5, y = 0.95, text_percent)
+text(x = 0.5, y = 0.95, text2, pos=1)
