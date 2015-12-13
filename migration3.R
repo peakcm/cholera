@@ -109,8 +109,8 @@ SEIRrates<-function(x,params,t){
 par=list(u = 1/(50*365),   # Death rate
          b = 1/(50*365),  # Birth rate
          B0 = 0.5,         # Transmission parameter for a non-vaccinated susceptible person contacting a non-vaccinated infectious person
-         k1 = 0.2,         # Proportional infectiousness of a once-vaccinated person
-         k2 = 0.5,         # Proportional infectiousness of a twice-vaccinated person
+         k1 = 0,         # Proportional infectiousness of a once-vaccinated person
+         k2 = 0,         # Proportional infectiousness of a twice-vaccinated person
          vac1 = 0.5,       # Personal efficacy of one dose of vaccine
          vac2 = 0.8,       # Personal efficacy of two doses of vaccine
          r = 1/3,          # Recovery rate (1/days)
@@ -337,14 +337,218 @@ Run_Model_S <- function (par, inits, tf=365, campaign){
 #########################
 # Stochastic Simulation #
 #########################
-trial <- Run_Model_S(par=par, inits=inits, tf = 365*10, campaign=campaign)
+year_max <- 5 #set the desired max number of years
+par$m <- .1/365 #set the daily migration rate
+campaign <- 2
+R_0 <- 1.5 #set the desired R_0 here
+par$B0 <- par$r*R_0  #back-calculate the transmissino parameter to satisfy the desired R_0
+trial <- Run_Model_S(par=par, inits=inits, tf = 365*year_max, campaign=campaign)
 Plot_Compartments(trial)
 # Plot_SEIR(trial)
 cat(" The Population size fluctuated ", (max(trial$N) - min(trial$N))/trial[1,"N"], "% ( min =", min(trial$N), " and max =", max(trial$N), ")\n", "A total of ", max(trial$I_incoming), " infectious individuals traveled into the population\n", "A total of ", max(trial$I_local), " local infections infections occured\n")
 
+####################################
+# Migration Rate and Herd Immunity #
+####################################
+
+par <- par_original
+par$p <- 0 #only interested in the duration of herd immunity in the absence of infections
+layout(c(1))
+m <- c(0, 0.1, 0.2, 0.3, 0.4, 0.5)
+dur <- rep(NA, length(m))
+data <- data.frame(cbind(m, dur))
+
+for (i in 1:nrow(data)){
+  par$m <- data[i, "m"]/365
+  sims <- 2
+  herd_immunity_years_avg <- 0
+  for (j in 1:sims){
+    trial <- Run_Model_S(par=par, inits=inits, tf = 365*10, campaign=campaign)
+  
+    X <- matrix(c(rep(0,dim(trial)[1]*2)),nrow=dim(trial)[1])
+    colnames(X) <- c("X", "RE")
+    R0 <- par$B0/par$r
+    s <- (trial["S_0"] + (1-par$vac1)*trial["S_1"] + (1-par$vac2)*trial["S_2"] + trial["R_0"] + trial["R_1"] + trial["R_2"]) / trial["N"]
+    X[,1] <- t(s)
+    X[,2] <- R0*X[,1]
+    day <- max(which(1 > X[,2]))
+    herd_immunity_years <- trial[day,"time"]/365
+    herd_immunity_years_avg <- herd_immunity_years_avg + herd_immunity_years
+  }
+  data[i, "dur"] <- herd_immunity_years_avg/sims
+  data[i,"R"] <- R0
+}
+
+ggplot(data, aes(x=m, y=dur)) +
+  theme_bw()+
+  geom_point() +
+  xlab("Migration Rate (Turnover Fraction per Year)") +
+  ylab("Years of Herd Immunity")
+
+#### Repeat for different levels of migration AND R ####
+par <- par_original
+par$p <- 0 #only interested in the duration of herd immunity in the absence of infections
+layout(c(1))
+m <- c(0, 0.01, 0.05, 0.1, 0.25)
+R <- c(1.2, 1.5, 2, 2.5)
+year_max <- 10
+
+data2 <- data.frame(cbind(m=rep(m, length(R)), R=rep(R,each=length(m))))
+data2$dur <- NA
+
+for (i in 1:nrow(data2)){
+  par$m <- data2[i, "m"]/365
+  par$B0 <- data2[i, "R"]*par$r
+  sims <- 10
+  herd_immunity_years_avg <- 0
+  # repeat to calculate average (because stochastic)
+  for (j in 1:sims){
+    trial <- Run_Model_S(par=par, inits=inits, tf = 365*year_max, campaign=campaign)
+    
+    X <- matrix(c(rep(0,dim(trial)[1]*2)),nrow=dim(trial)[1])
+    colnames(X) <- c("X", "RE")
+    R0 <- par$B0/par$r
+    s <- (trial["S_0"] + (1-par$vac1)*trial["S_1"] + (1-par$vac2)*trial["S_2"] + trial["R_0"] + trial["R_1"] + trial["R_2"]) / trial["N"]
+    X[,1] <- t(s)
+    X[,2] <- R0*X[,1]
+    day <- max(which(1 > X[,2]))
+    herd_immunity_years <- trial[day,"time"]/365
+    herd_immunity_years_avg <- herd_immunity_years_avg + herd_immunity_years
+  }
+  data2[i, "dur"] <- herd_immunity_years_avg/sims
+  cat("combination ", i, " of ", nrow(data2), "\n")
+}
+
+# Add expected number of infectious people introduced annually
+data2$I_incoming <- data2$m * par$ntot * 0.001
+
+data2$m <- factor(data2$m)
+data2$R <- factor(data2$R)
+
+ggplot(data2, aes(x=m, y=dur, group=R, col=R)) +
+  theme_bw()+
+  geom_line(size=2) +
+  xlab("Migration Rate (Turnover Fraction per Year)") +
+  ylab("Years of Herd Immunity")
+
+
+ggplot(data2, aes(x=m, y=dur, group=R, col=R)) +
+  theme_bw()+
+  facet_grid(.~R) +
+  geom_line(size=2) +
+  xlab("Migration Rate (Turnover Fraction per Year)") +
+  ylab("Years of Herd Immunity")
+
+ggplot(data2, aes(x=m,group=R)) +
+  theme_bw()+
+  facet_grid(.~R) +
+  geom_line(aes(y=dur), color = "blue", size=2) +
+  geom_line(aes(y=I_incoming), color = "red", size = 2) +
+  xlab("Migration Rate (Turnover Fraction per Year)") +
+  ylab("Years of Herd Immunity (blue)\nExpected Annual Infectious Introductions (red)")
+
+
+######################
+# Vaccination Impact #
+######################
+
+sims <- 10
+year_max <- 5
+cases <- matrix(c(rep(0,2*sims)),nrow=sims)
+colnames(cases) <- c("2V", "0V")
+for (i in 1:sims){
+  campaign <- 0
+  trial <- Run_Model_S(par=par_original, inits=inits_original, tf = 365*year_max, campaign=campaign)
+  cases[i,1] <- trial[nrow(trial),"I_local"]
+  campaign <- 2
+  trial <- Run_Model_S(par=par_original, inits=inits_original, tf = 365*year_max, campaign=campaign)
+  cases[i,2] <- trial[nrow(trial),"I_local"]
+}
+
+cases_avg <- c(sum(cases[,1]),sum(cases[,2]))/sims
+averted <- -diff(cases_avg)
+
+cases_sd <-  c(sd(cases[,1]), sd(cases[,2]))
+cases_cv <- cases_sd/cases_avg
+pr_outbreak <- c(length(which(cases[,1]>1000)), length(which(cases[,2]>1000))) / sims
+
+### cases averted by migration ###
+par <- par_original
+inits <- inits_original
+layout(c(1))
+m <- c(0, 0.01, 0.05, 0.1, 0.25)
+R <- c(1.2, 1.5, 2, 2.5)
+year_max <- 5
+sims <- 20
+
+data3 <- data.frame(cbind(m=rep(m, length(R)), R=rep(R,each=length(m))))
+data3$cases_0V <- NA
+data3$cases_2V <- NA
+data3$cases_0V_sd <- NA
+data3$cases_2V_sd <- NA
+data3$pr_outbreak_0V <- NA
+data3$pr_outbreak_2V <- NA
+data3$averted <- NA
+data3$averted_sd <- NA
+data3$pr_outbreak_diff <- NA
+
+for (i in 1:nrow(data3)){
+  par$m <- data3[i, "m"]/365
+  par$B0 <- data3[i, "R"]*par$r
+  cases <- matrix(c(rep(0,2*sims)),nrow=sims)
+  colnames(cases) <- c("2V", "0V")
+  for (j in 1:sims){
+    campaign <- 0
+    trial <- Run_Model_S(par=par, inits=inits, tf = 365*year_max, campaign=campaign)
+    cases[j,1] <- trial[nrow(trial),"I_local"]
+    campaign <- 2
+    trial <- Run_Model_S(par=par, inits=inits, tf = 365*year_max, campaign=campaign)
+    cases[j,2] <- trial[nrow(trial),"I_local"]
+  }
+  cases_avg <- c(sum(cases[,1]),sum(cases[,2]))/sims
+  cases_sd <- c(sd(cases[,1]), sd(cases[,2]))
+  data3[i, c("cases_0V", "cases_2V")] <- cases_avg
+  data3[i, c("cases_0V_sd", "cases_2V_sd")] <- cases_sd
+  averted <- cases[,1] - cases[,2]
+  data3[i,"averted"] <- mean(averted)
+  data3[i,"averted_sd"] <- sd(averted)
+  
+  pr_outbreak <- c(length(which(cases[,1]>1000)), length(which(cases[,2]>1000))) / sims
+  data3[i, c("pr_outbreak_0V", "pr_outbreak_2V")] <- pr_outbreak
+  data3[i,"pr_outbreak_diff"] <- -diff(pr_outbreak)
+  
+  cat("combination ", i, " of ", nrow(data3), "\n")
+}
+
+data3$m <- factor(data3$m)
+data3$R <- factor(data3$R)
+
+# ggplot(data3, aes(x=m, y=averted, group=R, col=R)) +
+#   theme_bw()+
+#   geom_line(size=2) +
+#   xlab("Migration Rate (Turnover Fraction per Year)") +
+#   ylab("Cases Averted (Impact of Vaccination)")
+
+errorbars <- aes(ymax = averted + averted_sd, ymin = averted - averted_sd)
+
+ggplot(data3, aes(x=m)) +
+  theme_bw() + 
+  facet_grid(.~R) +
+  geom_ribbon(aes(ymin = cases_0V - cases_0V_sd, ymax = cases_0V + cases_0V_sd, group = R), fill = "red", alpha = 0.2) +
+  geom_ribbon(aes(ymin = cases_2V - cases_2V_sd, ymax = cases_2V + cases_2V_sd, group = R), fill = "green", alpha = 0.2) +
+  geom_line(aes(y=cases_0V, group = R), color = "red", size = 2, alpha = 0.8) +
+  geom_line(aes(y=cases_2V, group = R), color = "green", size = 2, alpha = 0.8) +
+  geom_bar(aes(y=averted, group = R), fill = "grey", stat = "identity", alpha = 0.8) +
+  geom_errorbar(errorbars, width=0.25) +
+  ylab("Cases") +
+  xlab("Yearly Migration Fraction")
+  
+
 #######################
 # Deterministic Model #
 #######################
+
+## needs updating, dependent on future use of deterministic 12/12 ALR
 Model_D <- function(t, x, parms){ 
   with(as.list(c(parms,x)),{
     dS_0  <- b*N+m*N - (B0*S_0*I_0/N + (1-k1)*B0*S_0*I_1/N + (1-k2)*B0*S_0*I_2/N + B0*S_0*I_3/N + B0*S_0*I_4/N + B0*S_0*I_5/N + B0*S_0*I_6/N) - u*S_0 - m*S_0 - 1/365*S_0
