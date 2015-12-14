@@ -389,8 +389,8 @@ ggplot(data, aes(x=m, y=dur)) +
 par <- par_original
 par$p <- 0 #only interested in the duration of herd immunity in the absence of infections
 layout(c(1))
-m <- c(0, 0.01, 0.05, 0.1, 0.25)
-R <- c(1.2, 1.5, 2, 2.5)
+m <- c(0, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 0.75)
+R <- c(1.2, 1.5, 2)
 year_max <- 10
 
 data2 <- data.frame(cbind(m=rep(m, length(R)), R=rep(R,each=length(m))))
@@ -476,10 +476,10 @@ pr_outbreak <- c(length(which(cases[,1]>1000)), length(which(cases[,2]>1000))) /
 par <- par_original
 inits <- inits_original
 layout(c(1))
-m <- c(0, 0.01, 0.05, 0.1, 0.25)
-R <- c(1.2, 1.5, 2, 2.5)
+m <- c(0, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 0.75)
+R <- c(1.2, 1.5, 2)
 year_max <- 5
-sims <- 20
+sims <- 50
 
 data3 <- data.frame(cbind(m=rep(m, length(R)), R=rep(R,each=length(m))))
 data3$cases_0V <- NA
@@ -520,9 +520,6 @@ for (i in 1:nrow(data3)){
   cat("combination ", i, " of ", nrow(data3), "\n")
 }
 
-data3$m <- factor(data3$m)
-data3$R <- factor(data3$R)
-
 # ggplot(data3, aes(x=m, y=averted, group=R, col=R)) +
 #   theme_bw()+
 #   geom_line(size=2) +
@@ -531,7 +528,7 @@ data3$R <- factor(data3$R)
 
 errorbars <- aes(ymax = averted + averted_sd, ymin = averted - averted_sd)
 
-ggplot(data3, aes(x=m)) +
+ggplot(data3, aes(x=factor(m))) +
   theme_bw() + 
   facet_grid(.~R) +
   geom_ribbon(aes(ymin = cases_0V - cases_0V_sd, ymax = cases_0V + cases_0V_sd, group = R), fill = "red", alpha = 0.2) +
@@ -542,7 +539,45 @@ ggplot(data3, aes(x=m)) +
   geom_errorbar(errorbars, width=0.25) +
   ylab("Cases") +
   xlab("Yearly Migration Fraction")
+
+ggplot(data3, aes(x=factor(m))) +
+  theme_bw() + 
+  facet_grid(.~R) +
+    geom_bar(aes(y=pr_outbreak_diff, group = R), fill = "forestgreen", stat = "identity", alpha = 0.8) +
+    geom_errorbar(aes(ymin = pr_outbreak_diff - pr_outbreak_diff*(1-pr_outbreak_diff)/nrow(data3), ymax = pr_outbreak_diff + pr_outbreak_diff*(1-pr_outbreak_diff)/nrow(data3)), width = 0) +
+  geom_line(aes(y=pr_outbreak_0V, group = R), color = "black", size = 2, alpha = 0.8) +
+  geom_line(aes(y=pr_outbreak_2V, group = R), color = "grey", size = 2, alpha = 0.8) +
+  geom_ribbon(aes(ymin = pr_outbreak_0V - pr_outbreak_0V*(1-pr_outbreak_0V)/nrow(data3), ymax = pr_outbreak_0V + pr_outbreak_0V*(1-pr_outbreak_0V)/nrow(data3), group = R), fill = "black", alpha = 0.2) +
+  geom_ribbon(aes(ymin = pr_outbreak_2V - pr_outbreak_2V*(1-pr_outbreak_2V)/nrow(data3), ymax = pr_outbreak_2V + pr_outbreak_2V*(1-pr_outbreak_2V)/nrow(data3), group = R), fill = "grey", alpha = 0.2) +
+  ylab("Probability of an Outbreak within 5 years") +
+  xlab("Yearly Migration Fraction")
+
+ggplot(data3, aes(x=m)) +
+  theme_bw() + 
+  facet_grid(.~R) +
+#   geom_bar(aes(y=pr_outbreak_diff, group = R), fill = "forestgreen", stat = "identity", alpha = 0.8) +
+#   geom_errorbar(aes(ymin = pr_outbreak_diff - pr_outbreak_diff*(1-pr_outbreak_diff)/nrow(data3), ymax = pr_outbreak_diff + pr_outbreak_diff*(1-pr_outbreak_diff)/nrow(data3)), width = 0) +
+  geom_line(aes(y=pr_outbreak_0V, group = R), color = "black", size = 2, alpha = 0.8) +
+  geom_line(aes(y=pr_outbreak_2V, group = R), color = "grey", size = 2, alpha = 0.8) +
+  geom_ribbon(aes(ymin = pr_outbreak_0V - pr_outbreak_0V*(1-pr_outbreak_0V)/nrow(data3), ymax = pr_outbreak_0V + pr_outbreak_0V*(1-pr_outbreak_0V)/nrow(data3), group = R), fill = "black", alpha = 0.2) +
+  geom_ribbon(aes(ymin = pr_outbreak_2V - pr_outbreak_2V*(1-pr_outbreak_2V)/nrow(data3), ymax = pr_outbreak_2V + pr_outbreak_2V*(1-pr_outbreak_2V)/nrow(data3), group = R), fill = "grey", alpha = 0.2) +
+  ylab("Probability of an Outbreak within 5 years") +
+  xlab("Yearly Migration Fraction")
+
+
+#### Create a heatmap of cases averted ####
+ggplot(data3, aes(x = factor(m), y = factor(R), fill = averted)) +
+  geom_raster() +
+  ylab("Basic Reproductive Number") +
+  xlab("Yearly Migration Fraction") +
+  scale_fill_continuous(name = "Cases Averted")
   
+ggplot(data3, aes(x = factor(m), y = factor(R), fill = pr_outbreak_diff)) +
+  geom_raster() +
+  ylab("Basic Reproductive Number") +
+  xlab("Yearly Migration Fraction") +
+  scale_fill_continuous(name = "Reduction in the\nProbability of an\nOutbreak within\n5 years")
+
 
 #######################
 # Deterministic Model #
