@@ -4,18 +4,18 @@ library(survival)
 #### Create Fictional OCV data ####
 years = 5
 samples = 100000
-VE = 0.4  # Only works right now for VE < 0.5 because I'm assuming linear decay of VE to zero, with the mean centered at VE
+VE = 0.4  # Best if VE < 0.5 because I'm assuming linear decay down to the background event probability
 event_prob_untreated <- 0.5
 event_prob_treated <- event_prob_untreated*(1-VE)
 fake_ocv <- data.frame(ID = 1:samples,
                        treat = rep(c(0,1), each = samples/2),
-                       time = round(c(runif(n=samples/2, min = 1, max = 365*years), runif(n=samples/2, min = 1, max = 365*years))),
-                       event = c(rbinom(n = samples/2, size = 1, prob = event_prob_untreated), rbinom(n = samples/2, size = 1, prob = event_prob_treated)))
+                       time = round(runif(n=samples, min = 1, max = 365*years)),
+                       event = c(rbinom(n = samples/2, size = 1, prob = event_prob_untreated), rbinom(n = samples/2, size = 1, prob = event_prob_treated))) # Event times occur randomly, but some are censoring and some are disease
 
 # Add a time-varying effect that is strong at first and then gets weaker
 fake_ocv <- fake_ocv[order(fake_ocv$treat, fake_ocv$time),] # Sort by treatment status, then time
 fake_ocv$event_tv <- fake_ocv$event
-fake_ocv[(samples/2+1):samples, "event_tv"] <- sapply(seq(event_prob_untreated -(event_prob_untreated - event_prob_treated)*2, event_prob_untreated, length.out = samples/2), function(x) rbinom(n=1, size=1, prob = x))
+fake_ocv[(samples/2+1):samples, "event_tv"] <- sapply(seq(min(1, VE*2), 0, length.out = samples/2), function(x) rbinom(n=1, size=1, prob = event_prob_untreated*(1-x)))
 
 #### Confirm behavior of Fictional Data ####
 # Calculate VE via 1-RR
