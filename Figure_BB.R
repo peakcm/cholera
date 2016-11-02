@@ -3,16 +3,18 @@
 # Show curves for R = 1, 1.5, 2
 # Y axis is "Probability of an Outbreak
 
+setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
+
 #### Load workspace ####
-load(file = "cholera/Figure_BB.RData")
+load(file = "Figure_BB.RData")
 
 #### Load libraries and functions ####
-source("cholera/calculate_Re.R")
-source("cholera/calculate_VE.R")
-source("cholera/Seasonality.R")
-source("cholera/prob_outbreak_fcn.R")
-source("cholera/SIRV_model.R")
-source("cholera/Run_SIRV_model.R")
+source("calculate_Re.R")
+source("calculate_VE.R")
+source("Seasonality.R")
+source("prob_outbreak_fcn.R")
+source("SIRV_model.R")
+source("Run_SIRV_model.R")
 require(ggplot2)
 require(data.table)
 
