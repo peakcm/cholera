@@ -1,5 +1,6 @@
 #### Practice proportional hazards testing of schoenfeld residuals ####
 library(survival)
+par(mfrow=c(2,2))
 
 #### Create Fictional OCV data ####
 years = 5
@@ -33,8 +34,8 @@ summary(coxph(Surv(time,event_tv) ~ treat, data=fake_ocv[fake_ocv$time < max(fak
 summary(coxph(Surv(time,event_tv) ~ treat, data=fake_ocv[fake_ocv$time > max(fake_ocv$time)/2,]))[c("coefficients", "conf.int")]
 
 # Plot survival curves 
-plot(survfit(formula = Surv(time, event)~ treat, data = fake_ocv, conf.type="none"), xlab="Time", ylab="Survival Probability", main = "Constant VE effect")
-plot(survfit(formula = Surv(time, event_tv)~ treat, data = fake_ocv, conf.type="none"), xlab="Time", ylab="Survival Probability", main = "Time-waning VE effect")
+plot(survfit(formula = Surv(time/365, event)~ treat, data = fake_ocv, conf.type="none"), xlab="Years", ylab="Survival Probability", main = "Constant VE effect", col = c("red", "blue"))
+plot(survfit(formula = Surv(time/365, event_tv)~ treat, data = fake_ocv, conf.type="none"), xlab="Years", ylab="Survival Probability", main = "Time-waning VE effect", col = c("red", "blue"))
 
 #### Including Time Dependent Covariates in the Cox Model - static VE ####
 time.dep <- coxph( Surv(time, event)~treat,data = fake_ocv,
@@ -47,7 +48,7 @@ time.dep.zph.df <- data.frame(x = as.numeric(time.dep.zph$x), y = as.numeric(tim
 # ggplot(time.dep.zph.df, aes(x=x, y=y)) + geom_point() + stat_smooth(method="lm", formula = y ~ splines::bs(x,4))
 
 time.dep.zph.df.spline <- lm(time.dep.zph.df$y ~ splines::bs(time.dep.zph.df$x,4))
-plot(time.dep.zph.df$x*years, 1-exp(time.dep.zph.df.spline$fitted.values), ylim = c(0,1), type = "l", ylab = "VE(t)", xlab = "Years")
+plot(time.dep.zph.df$x*years, 1-exp(time.dep.zph.df.spline$fitted.values), ylim = c(-.1,1), type = "l", ylab = "VE(t)", xlab = "Years", xlim = c(0,5), main = "Constant VE effect")
 abline(h = VE, lty = 3)
 
 #### Including Time Dependent Covariates in the Cox Model - waning VE ####
@@ -60,6 +61,9 @@ time.dep.zph.tv.df <- data.frame(x = as.numeric(time.dep.zph.tv$x), y = as.numer
 # ggplot(time.dep.zph.tv.df, aes(x=x, y=y)) + geom_point() + stat_smooth(method="lm", formula = y ~ splines::bs(x,4))
 
 time.dep.zph.tv.df.spline <- lm(time.dep.zph.tv.df$y ~ splines::bs(time.dep.zph.tv.df$x,4))
-plot(time.dep.zph.tv.df$x*years, 1-exp(time.dep.zph.tv.df.spline$fitted.values), ylim = c(-.1,1), type = "l", ylab = "VE(t)", xlab = "Years")
+plot(time.dep.zph.tv.df$x*years, 1-exp(time.dep.zph.tv.df.spline$fitted.values), ylim = c(-.1,1), type = "l", ylab = "VE(t)", xlab = "Years", xlim = c(0,5), main = "Time-waning VE effect")
 abline(h = VE, lty = 3)
 
+#### Save Plot ####
+dev.copy(png,'ve_t_method.png')
+dev.off()
