@@ -57,7 +57,16 @@ ui <- fluidPage(
                      "Amplitude of Seasonality:",
                      min = 0,
                      max = 1,
-                     value = 0.2)
+                     value = 0.2),
+         radioButtons("outcome_of_interest",
+                     "Outcome of Interest:",
+                     choices=c("Effective Reproductive Number" = "Re", "Probability of Outbreak" = "prob"),
+                     selected = "Re"),
+         sliderInput("outbreak_size",
+                     "Minimum size of 'Outbreak':",
+                     min = 1, 
+                     max = 100,
+                     value = 10)
       ),
       
       # Show a plot of the generated distribution
@@ -108,10 +117,14 @@ server <- function(input, output) {
   
   
     output$R_t <- renderPlot({
-     
-       ggplot(model(), aes(x = time/365, y = Re)) + geom_line() + geom_hline(yintercept=1, col="red") + 
-       theme_bw() + xlab("Years since Vaccination") + ylab("R Effective") + scale_x_continuous(breaks = seq(0, 5, 1)) +
-       ylim(0,max(3, input$R_0))
+      if (input$outcome_of_interest %in% "Re"){
+        ggplot(model(), aes(x = time/365, y = Re)) + geom_line()  + 
+          theme_bw() + xlab("Years since Vaccination") + ylab("R Effective") + scale_x_continuous(breaks = seq(0, 5, 1)) +
+          ylim(0,max(3, input$R_0)) + geom_hline(yintercept=1, col="red")
+      } else if (input$outcome_of_interest %in% "prob"){
+        ggplot(model(), aes(x = time/365, y = prob_outbreak_fcn(Re, input$outbreak_size))) + geom_line()  + 
+          theme_bw() + xlab("Years since Vaccination") + ylab(paste("Probability of >", input$outbreak_size, "cases")) + scale_x_continuous(breaks = seq(0, 5, 1)) + ylim(0,1)
+      }
      })
    
    output$lose_herd <- renderText({
