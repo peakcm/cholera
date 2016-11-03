@@ -1,3 +1,4 @@
+
 #### Figure VC on impact of vaccine coverage ####
 # Under construction
 # Heatmap
@@ -7,15 +8,15 @@
 setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
 
 #### Load workspace ####
-load(file = "Figure_VC.RData")
+load(file = "src/Figure_VC.RData")
 
 #### Load libraries and functions ####
-source("calculate_Re.R")
-source("calculate_VE.R")
-source("Seasonality.R")
-source("prob_outbreak_fcn.R")
-source("SIRV_model.R")
-source("Run_SIRV_model.R")
+source("src/calculate_Re.R")
+source("src/calculate_VE.R")
+source("src/Seasonality.R")
+source("src/prob_outbreak_fcn.R")
+source("src/SIRV_model.R")
+source("src/Run_SIRV_model.R")
 require(ggplot2)
 require(data.table)
 require(RColorBrewer)
@@ -34,8 +35,8 @@ VE_conditions <- list(
   "Dukoral" = Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Dukoral",bound = TRUE, max_V_months = max_V_months)
 )
 
-R0_conditions <- seq(1, 3, 0.05)
-VC_conditions <- seq(0.1, 1, 0.05)
+R0_conditions <- seq(1, 2.5, 0.05)
+VC_conditions <- seq(0.05, 1, 0.05)
 
 sims <- length(VE_conditions) * length(R0_conditions) * length(VC_conditions)
 
@@ -129,16 +130,21 @@ for (row in 1:sims){
 # fig_VC_df_melt$mig_condition_name <- factor(fig_VC_df_melt$mig_condition_name, levels = c("high", "low", "none"), labels = c("High", "Low", "None"), ordered = TRUE)
 # fig_VC_df_melt$R0_condition_name <- factor(fig_VC_df_melt$R0_condition_name, levels = c("High", "Moderate", "Low"), labels = c("High (2)", "Moderate (1.5)", "Low (1)"), ordered = TRUE)
 
+#### Clean up workspace ####
+rm(fig_VC_df)
+rm(output)
+fig_VC_df_melt <- fig_VC_df_melt[fig_VC_df_melt$DHI == 1,]
+
 #### Heatmap of DHI ####
-ggplot(fig_VC_df_melt[fig_VC_df_melt$DHI == 1 & fig_VC_df_melt$R0_condition_name > 1,], aes(x=VC_condition_name, y =R0_condition_name, fill = times/365)) + geom_tile()  + theme_bw() + ylab("Basic Reproductive Number") + xlab("Vaccine Coverage") + facet_grid(VE_condition_name~.) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6)) + scale_fill_gradientn(name="Duration of\nHerd Immunity\n(Years)", colours = rainbow(4))
+ggplot(fig_VC_df_melt[fig_VC_df_melt$R0_condition_name > 1,], aes(x=VC_condition_name, y =R0_condition_name, fill = times/365)) + geom_tile()  + theme_bw() + ylab("Basic Reproductive Number") + xlab("Vaccine Coverage") + facet_grid(VE_condition_name~.) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6)) + scale_fill_gradientn(name="Duration of\nHerd Immunity\n(Years)", colours = rainbow(4))
 
 # scale_fill_gradient2(name="Duration of\nHerd Immunity\n(Years)", low = "#80cdc1", mid = "white", midpoint = 2, high = "#a6611a") 
 
-ggsave(file = "cholera/Figure_VC.pdf", width = 4, height = 4, units = "in")
+ggsave(file = "figures/Figure_VC.pdf", width = 4, height = 4, units = "in")
 
 #### Bar chart of DHI ####
 # A work in progress
 ggplot(fig_VC_df_melt[fig_VC_df_melt$DHI == 1,], aes(x = VE_condition_name, y = times/365, fill = R0_condition_name, color = mig_condition_name))  + geom_bar(position = "dodge", stat = "identity", width = .8) + ylab("Duration of Herd Immunity (Years)") + coord_flip() + scale_x_discrete(limits = rev(levels(fig_VC_df_melt$VE_condition_name)))
 
 #### Save workspace ####
-save.image(file = "cholera/Figure_VC.RData")
+save.image(file = "src/Figure_VC.RData")

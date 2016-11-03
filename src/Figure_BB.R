@@ -6,15 +6,15 @@
 setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
 
 #### Load workspace ####
-load(file = "Figure_BB.RData")
+load(file = "src/Figure_BB.RData")
 
 #### Load libraries and functions ####
-source("calculate_Re.R")
-source("calculate_VE.R")
-source("Seasonality.R")
-source("prob_outbreak_fcn.R")
-source("SIRV_model.R")
-source("Run_SIRV_model.R")
+source("src/calculate_Re.R")
+source("src/calculate_VE.R")
+source("src/Seasonality.R")
+source("src/prob_outbreak_fcn.R")
+source("src/SIRV_model.R")
+source("src/Run_SIRV_model.R")
 require(ggplot2)
 require(data.table)
 
@@ -133,8 +133,8 @@ ggplot(fig_BB_df_melt, aes(x = times/365, y = Re, linetype = mig_condition_name,
 # Can add Re as a secondary axis with the probabilty of an outbreak
 ggplot(fig_BB_df_melt, aes(x = times/365, y = prob_outbreak_10, linetype = mig_condition_name, color = R0_condition_name)) + geom_hline(yintercept = 0.246, col = "grey") + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years") + ylab("Probability of an Outbreak\n(at least 10 cases)") + theme_bw() + scale_color_discrete(name = "Basic Reproductive\nNumber") + scale_linetype_discrete(name = "In/Out Migration Rate") + ylim(0,1) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
 
-ggsave(file = "cholera/Figure_BB.pdf", width = 5, height = 3, units = "in")
-# ggsave(file = "cholera/Figure_BB_seasonal.pdf", width = 5, height = 3, units = "in")
+ggsave(file = "figures/Figure_BB.pdf", width = 5, height = 3, units = "in")
+# ggsave(file = "figures/Figure_BB_seasonal.pdf", width = 5, height = 3, units = "in")
 
 
 #### Bar chart of DHI ####
@@ -143,4 +143,4 @@ ggplot(fig_BB_df_melt[fig_BB_df_melt$DHI == 1,], aes(x = VE_condition_name, y = 
 
 
 #### Save workspace ####
-save.image(file = "cholera/Figure_BB.RData")
+save.image(file = "src/Figure_BB.RData")

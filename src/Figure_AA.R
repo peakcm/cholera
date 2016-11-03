@@ -6,15 +6,15 @@
 setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
 
 #### Load workspace ####
-load(file = "Figure_AA.RData")
+load(file = "src/Figure_AA.RData")
 
 #### Load libraries and functions ####
-source("calculate_Re.R")
-source("calculate_VE.R")
-source("Seasonality.R")
-source("prob_outbreak_fcn.R")
-source("SIRV_model.R")
-source("Run_SIRV_model.R")
+source("src/calculate_Re.R")
+source("src/calculate_VE.R")
+source("src/Seasonality.R")
+source("src/prob_outbreak_fcn.R")
+source("src/SIRV_model.R")
+source("src/Run_SIRV_model.R")
 require(ggplot2)
 require(data.table)
 
@@ -112,9 +112,9 @@ fig_AA_df_melt$birth_death_rate_condition_name <- factor(fig_AA_df_melt$birth_de
 # The no-birth, no-mig line shows the vaccine waning profile.
 ggplot(fig_AA_df_melt, aes(x = times/365, y = Re, linetype = mig_condition_name, color = birth_death_rate_condition_name)) + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years") + ylab("X(t)") + theme_bw() + scale_color_manual(values = c("black", "grey"), name = "Birth/Death Rate") + scale_linetype_discrete(name = "In/Out Migration Rate") + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
 
-ggsave(file = "cholera/Figure_AA.pdf", width = 5, height = 3, units = "in")
+ggsave(file = "figures/Figure_AA.pdf", width = 5, height = 3, units = "in")
 
 #### Save workspace ####
-save.image(file = "cholera/Figure_AA.RData")
+save.image(file = "src/Figure_AA.RData")
 
 

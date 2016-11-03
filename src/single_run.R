@@ -1,12 +1,13 @@
 #### Test SIRV model with single conditions ####
+setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
 
 #### Load libraries and functions ####
-source("cholera/calculate_Re.R")
-source("cholera/calculate_VE.R")
-source("cholera/Seasonality.R")
-source("cholera/prob_outbreak_fcn.R")
-source("cholera/SIRV_model.R")
-source("cholera/Run_SIRV_model.R")
+source("src/calculate_Re.R")
+source("src/calculate_VE.R")
+source("src/Seasonality.R")
+source("src/prob_outbreak_fcn.R")
+source("src/SIRV_model.R")
+source("src/Run_SIRV_model.R")
 require(ggplot2)
 
 #### Example input parms #####
@@ -18,7 +19,7 @@ V_comps_per_month = 1
 
 n.comps.V = max_V_months*V_comps_per_month
 # VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Shanchol",bound = TRUE)
-VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Dukoral",bound = TRUE)
+VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Dukoral",bound = TRUE,max_V_months = max_V_months)
 # VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Perfect", bound = TRUE, max_V_months = max_V_months)
 
 params <- list(beta=0.6538415,                # Daily transmission parameter. From Guinea, beta=0.6538415
