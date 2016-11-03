@@ -1,8 +1,8 @@
 #### Function to run SIRV model ####
-run_model <- function(func, times, params){
+run_model <- function(inits, func, times, params){
   require(deSolve)
   
-  run <- ode(y=x,
+  run <- ode(y=inits,
              times = times,
              func = func,
              parms = params)
