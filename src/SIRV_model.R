@@ -36,12 +36,12 @@ SIRV.generic <- function(t,
   # lambda <- 0
   
   ## vaccine waning
-  dV.states <- rep(0, n.comps.V)
+  dV.states <- rep(0, params$n.comps.V)
   names(dV.states) <- paste0(rep(paste0("dV."), params$n.comps.V), 1:params$n.comps.V)
   
   if (length(dV.states) != length(params$VE)) stop("length of params$VE does not match number of V.states")
   
-  for (y in seq_len(n.comps.V)){
+  for (y in seq_len(params$n.comps.V)){
     if (y==1){
       dV.states[1] <- -params$V_step*V.states.vector[1] -lambda*V.states.vector[1]*(1-params$VE[1]) -params$mig_out*V.states.vector[1] -params$birth_death_rate*V.states.vector[1]
     } else {
@@ -50,7 +50,7 @@ SIRV.generic <- function(t,
   }
   
   ## susceptibles
-  dS <- params$nat_wane*R + params$V_step*V.states.vector[n.comps.V] +params$mig_in*(N*(1-params$foreign_infection)) +params$birth_death_rate*N -lambda*S -params$mig_out*S -params$birth_death_rate*S
+  dS <- params$nat_wane*R + params$V_step*V.states.vector[params$n.comps.V] +params$mig_in*(N*(1-params$foreign_infection)) +params$birth_death_rate*N -lambda*S -params$mig_out*S -params$birth_death_rate*S
   
   ## latent
   dE  <- - params$sigma*E + lambda*S + sum(lambda*V.states.vector*(1-params$VE)) - params$mig_out*E -params$birth_death_rate*E

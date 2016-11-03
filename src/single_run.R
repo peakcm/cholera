@@ -15,7 +15,7 @@ times <- seq(0,356*10)
 
 # Calculate elements of VE
 max_V_months = 48
-V_comps_per_month = .5
+V_comps_per_month = 1 # choose from 0.5, 1, 1.5, etc.
 
 n.comps.V = max_V_months*V_comps_per_month
 # VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Shanchol",bound = TRUE)
