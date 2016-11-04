@@ -126,7 +126,7 @@ for (row in 1:sims){
 }
 
 # Rename Factors
-# fig_VC_df_melt$VE_condition_name <- factor(fig_VC_df_melt$VE_condition_name, levels = c("Shanchol", "Dukoral", "Perfect"), labels = c("Whole Cell\n(eg Shanchol)", "BS-Whole Cell\n(eg Dukoral)", "Perfect Vaccine"), ordered = TRUE)
+fig_VC_df_melt$VE_condition_name <- factor(fig_VC_df_melt$VE_condition_name, levels = c("Shanchol", "Dukoral"), labels = c("Whole Cell\n(eg Shanchol)", "BS-Whole Cell\n(eg Dukoral)"), ordered = TRUE)
 # fig_VC_df_melt$mig_condition_name <- factor(fig_VC_df_melt$mig_condition_name, levels = c("high", "low", "none"), labels = c("High", "Low", "None"), ordered = TRUE)
 # fig_VC_df_melt$R0_condition_name <- factor(fig_VC_df_melt$R0_condition_name, levels = c("High", "Moderate", "Low"), labels = c("High (2)", "Moderate (1.5)", "Low (1)"), ordered = TRUE)
 
