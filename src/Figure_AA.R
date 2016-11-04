@@ -22,7 +22,7 @@ require(data.table)
 years = 10
 times <- seq(0,356*years)
 
-max_V_months = 12*years
+max_V_months = 12*(years+5) # Go beyond "years" so the "perfect" vaccine remains perfect
 V_comps_per_month = 1
 n.comps.V = max_V_months*V_comps_per_month
 
@@ -110,7 +110,7 @@ fig_AA_df_melt$birth_death_rate_condition_name <- factor(fig_AA_df_melt$birth_de
 
 #### Plot X(t) ####
 # The no-birth, no-mig line shows the vaccine waning profile.
-ggplot(fig_AA_df_melt, aes(x = times/365, y = Re, linetype = mig_condition_name, color = birth_death_rate_condition_name)) + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years") + ylab("X(t)") + theme_bw() + scale_color_manual(values = c("black", "grey"), name = "Birth/Death Rate") + scale_linetype_discrete(name = "In/Out Migration Rate") + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
+ggplot(fig_AA_df_melt, aes(x = times/365, y = Re, linetype = mig_condition_name, color = birth_death_rate_condition_name)) + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years since Vaccination") + ylab("X(t)") + theme_bw() + scale_color_manual(values = c("black", "grey"), name = "Birth/Death Rate") + scale_linetype_discrete(name = "In/Out Migration Rate") + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
 
 ggsave(file = "figures/Figure_AA.pdf", width = 5, height = 3, units = "in")
 

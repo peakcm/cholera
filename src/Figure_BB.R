@@ -22,7 +22,7 @@ require(data.table)
 years = 10
 times <- seq(0,356*years)
 
-max_V_months = 12*years
+max_V_months = 12*(years+5)  # Go beyond "years" so the "perfect" vaccine remains perfect 
 V_comps_per_month = 1
 n.comps.V = max_V_months*V_comps_per_month
 
@@ -54,7 +54,7 @@ for (row in seq_len(sims)){
   
   # Create params
   params <- list(beta=fig_BB_df$R0_condition[row]/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
-                 beta_shape = "constant",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
+                 beta_shape = "sinusoidal",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
                  beta_amp = 0.05,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
                  beta_phase_shift = 0,          # Phase shift in a sinusoidal seasonal forcing function
                  gamma=1/2,                     # Duration of disease
@@ -125,13 +125,13 @@ fig_BB_df_melt$R0_condition_name <- factor(fig_BB_df_melt$R0_condition_name, lev
 
 #### Plot Re over time ####
 # The blue dotted line essentially shows the assume vaccine waning profile.
-ggplot(fig_BB_df_melt, aes(x = times/365, y = Re, linetype = mig_condition_name, color = R0_condition_name)) + geom_hline(yintercept =1, col = "darkgrey") + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years") + ylab("Effective Reproductive Number") + theme_bw() + scale_color_discrete(name = "Basic Reproductive\nNumber") + scale_linetype_discrete(name = "In/Out Migration Rate") + ylim(0,2) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
+ggplot(fig_BB_df_melt, aes(x = times/365, y = Re, linetype = mig_condition_name, color = R0_condition_name)) + geom_hline(yintercept =1, col = "darkgrey") + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years since Vaccination") + ylab("Effective Reproductive Number") + theme_bw() + scale_color_discrete(name = "Basic Reproductive\nNumber") + scale_linetype_discrete(name = "In/Out Migration Rate") + ylim(0,2) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
 
 #### Plot Prob of Outbreak ####
 # Add an indicator on each curve marking the loss of Herd Immunity
 # Alternatively, since the y=0.246 line is Re = 1, just draw a line
 # Can add Re as a secondary axis with the probabilty of an outbreak
-ggplot(fig_BB_df_melt, aes(x = times/365, y = prob_outbreak_10, linetype = mig_condition_name, color = R0_condition_name)) + geom_hline(yintercept = 0.246, col = "grey") + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years") + ylab("Probability of an Outbreak\n(at least 10 cases)") + theme_bw() + scale_color_discrete(name = "Basic Reproductive\nNumber") + scale_linetype_discrete(name = "In/Out Migration Rate") + ylim(0,1) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
+ggplot(fig_BB_df_melt, aes(x = times/365, y = prob_outbreak_10, linetype = mig_condition_name, color = R0_condition_name)) + geom_hline(yintercept = 0.246, col = "grey") + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years since Vaccination") + ylab("Probability of an Outbreak\n(at least 10 cases)") + theme_bw() + scale_color_discrete(name = "Basic Reproductive\nNumber") + scale_linetype_discrete(name = "In/Out Migration Rate") + ylim(0,1) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
 
 ggsave(file = "figures/Figure_BB.pdf", width = 5, height = 3, units = "in")
 # ggsave(file = "figures/Figure_BB_seasonal.pdf", width = 5, height = 3, units = "in")
