@@ -3,7 +3,6 @@
 setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
 source("src/prob_outbreak_fcn.R")
 source("src/calculate_VE.R")
-library(ggplot2)
 
 # Sum from 0 to 5 years by day. for (A)*(B)*(C)
 # (A) Expected number of immigrants at time t
@@ -52,36 +51,3 @@ cum_prob_outbreak <- function(years, mig_rate, pop_size, time_step, avg_prob, se
 
   return(1-prod((1-df[, "prob_outbreak_t"])))
 }
-
-#### Practice ####
-years = 5
-mig_rate = 1/200
-pop_size = 1000
-time_step = 1 # day
-avg_prob = 0.01 # yearly average prob that immigrant is infected
-seasonal_amp = 0.1 # 0 if no seasonality. 1 if doubles
-R = 1.5 # yearly average
-outbreak_size = 10 # min cases for outbreak definition
-vaccine_choice = "None"
-# vaccine_choice = "Shanchol"
-# vaccine_choice = "Dukoral"
-
-cum_prob_outbreak(years = years, mig_rate = mig_rate, pop_size = pop_size, time_step = time_step, avg_prob = avg_prob, seasonal_amp = seasonal_amp, R = R, outbreak_size = outbreak_size, vaccine_choice = vaccine_choice)
-
-#### Loop ####
-vaccine_choices = c("None", "Shanchol")
-mig_rate_choices = seq(0, 1/5, length.out = 40)
-
-df <- data.frame(vaccine_choice = rep(vaccine_choices, each = length(mig_rate_choices)), mig_rate = rep(mig_rate_choices, length(vaccine_choices)), prob_outbreak = NA)
-
-for (i in 1:nrow(df)){
-  df[i, "prob_outbreak"] <- cum_prob_outbreak(years = years, mig_rate = df[i, "mig_rate"], pop_size = pop_size, time_step = time_step, avg_prob = avg_prob, seasonal_amp = seasonal_amp, R = R, outbreak_size = outbreak_size, vaccine_choice = df[i, "vaccine_choice"])
-  cat(".")
-}
-
-df_diff <- data.frame(mig_rate = mig_rate_choices, diff = NA)
-for (i in 1:nrow(df_diff)){
-  df_diff[i, "diff"] <- df[df$vaccine_choice == "None" & df$mig_rate == df_diff[i,"mig_rate"], "prob_outbreak"] - df[df$vaccine_choice == "Shanchol" & df$mig_rate == df_diff[i,"mig_rate"], "prob_outbreak"]
-}
-
-ggplot() + geom_bar(data = df_diff, aes(x = mig_rate, y = diff), stat = "identity", color = "lightgrey", fill = "grey") + geom_line(data = df, aes(x = mig_rate, y = prob_outbreak, color = vaccine_choice)) + theme_bw() + ylab("Probability of an Outbreak") + xlab("Migration Rate (per year)") + scale_color_discrete(name = "Vaccine Status")
