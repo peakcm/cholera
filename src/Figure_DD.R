@@ -6,7 +6,7 @@ library(ggplot2)
 #### Practice ####
 years = 5
 mig_rate = 1/200
-pop_size = 10000
+pop_size = 1000
 time_step = 1 # day
 avg_prob = 0.001 # yearly average prob that immigrant is infected
 seasonal_amp = 0 # 0 if no seasonality. 1 if doubles
@@ -20,7 +20,7 @@ cum_prob_outbreak(years = years, mig_rate = mig_rate, pop_size = pop_size, time_
 
 #### Loop ####
 vaccine_choices = c("None", "Shanchol")
-mig_rate_choices = seq(0, 1/5, length.out = 50)
+mig_rate_choices = seq(0, 1/1, length.out = 50)
 
 df <- data.frame(vaccine_choice = rep(vaccine_choices, each = length(mig_rate_choices)), mig_rate = rep(mig_rate_choices, length(vaccine_choices)), prob_outbreak = NA)
 
@@ -34,7 +34,7 @@ for (i in 1:nrow(df_diff)){
   df_diff[i, "diff"] <- df[df$vaccine_choice == "None" & df$mig_rate == df_diff[i,"mig_rate"], "prob_outbreak"] - df[df$vaccine_choice == "Shanchol" & df$mig_rate == df_diff[i,"mig_rate"], "prob_outbreak"]
 }
 
-ggplot() + geom_bar(data = df_diff, aes(x = mig_rate, y = diff), stat = "identity", color = "lightgrey", fill = "grey") + geom_line(data = df, aes(x = mig_rate, y = prob_outbreak, color = vaccine_choice)) + theme_bw() + ylab("Probability of an Outbreak") + scale_color_discrete(name = "Vaccine Status") + scale_x_continuous(breaks = c(0, 0.05, 0.10, 0.15, 0.20), labels = c("0", "1/20", "1/10", "1/6.6", "1/5"), name = "Migration Rate (per year)")
+ggplot() + geom_bar(data = df_diff, aes(x = mig_rate, y = diff), stat = "identity", color = "lightgrey", fill = "grey") + geom_line(data = df, aes(x = mig_rate, y = prob_outbreak, color = vaccine_choice)) + theme_bw() + ylab("Probability of an Outbreak") + scale_color_discrete(name = "Vaccine Status") + scale_x_continuous(breaks = c(0.05, 0.20, 0.333, 0.5, 1/1.5, 1), labels = c("1/20", "1/5", "1/3", "1/2", "1/1.5", "1/1"), name = "Migration Rate (per year)")
 
 ggsave(file = "figures/Figure_DD.pdf", width = 5, height = 3, units = "in")
 
