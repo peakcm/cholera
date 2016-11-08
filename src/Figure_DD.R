@@ -3,6 +3,9 @@ setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
 source("src/vax_targeting.R")
 library(ggplot2)
 
+#### Load workspace ####
+load(file = "src/Figure_DD.RData")
+
 #### Practice ####
 years = 5
 mig_rate = 1/200
@@ -34,11 +37,16 @@ for (i in 1:nrow(df_diff)){
   df_diff[i, "diff"] <- df[df$vaccine_choice == "None" & df$mig_rate == df_diff[i,"mig_rate"], "prob_outbreak"] - df[df$vaccine_choice == "Shanchol" & df$mig_rate == df_diff[i,"mig_rate"], "prob_outbreak"]
 }
 
+#### Plot ####
 ggplot() + geom_bar(data = df_diff, aes(x = mig_rate, y = diff, fill = "Difference"), stat = "identity") + geom_line(data = df, aes(x = mig_rate, y = prob_outbreak, color = vaccine_choice)) + theme_bw() + ylab("Probability of an Outbreak") + scale_color_discrete(name = "Vaccine Status") + scale_x_continuous(breaks = c(0.05, 0.20, 0.333, 0.5, 1/1.5, 1), labels = c("1/20", "1/5", "1/3", "1/2", "1/1.5", "1/1"), name = "Migration Rate (per year)") + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6)) + theme(legend.position = c(.8, .5)) + scale_fill_manual(name = element_blank(), values = "grey") + guides(color = guide_legend(order = 1))
-
-ggsave(file = "figures/Figure_DD.pdf", width = 3, height = 3, units = "in")
 
 # Higher R, lower optimal Migration Rate. 
 # Higher seasonal amplitude, lower optimal Migration Rate
 # Pop size and avg_prob are inversely associated. 
 # Higher min outbreak size increases the difference between vax and non-vax, but does not shift optimal migration rate.
+
+#### Save Plot ####
+ggsave(file = "figures/Figure_DD.pdf", width = 3, height = 3, units = "in")
+
+#### Save workspace ####
+save.image(file = "src/Figure_DD.RData")
