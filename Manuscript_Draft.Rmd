@@ -1,0 +1,56 @@
+---
+title: "Manuscript_Draft"
+author: "Corey Peak"
+date: "11/9/2016"
+output: 
+  pdf_document:
+    fig_caption: yes
+    pandoc_args: [
+      "-V", "classoption=twocolumn"
+    ]
+  word_document: default
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(dev = 'pdf')
+library(ggplot2)
+library(bookdown)
+```
+
+## INTRODUCTION
+
+Vaccines can provide recipients with direct protective effects by priming their immune system before wild exposure to a pathogen. For contagious diseases, indirect protective effects of a vaccine campaign emerge when an individual (vaccinated or unvaccinated) has a lower rate of encountering the pathogen because some fraction of their contacts were vaccinated and are therefore less likely to carry the pathogen themselves. The extent of indirect protection therefore depends on both the degree to which each recipient benefits from the vaccine, often called the vaccine efficacy, and the fraction vaccinated, often called the vaccine coverage.
+
+Over time, the direct effects of some vaccines wane and render the recipient once again susceptible to the disease. Likewise, waning of indirect, or “herd”, protection in a particular population can result from the waning of direct effects, but also through population turnover with a net replacement of vaccinated individuals with unvaccinated individuals. 
+
+Although much attention is given to measuring the duration and magnitude of vaccine efficacy, many questions regarding herd protection remain. For instance, vaccines can be a relatively quick means to protect an at-risk population until longer-term solutions can be instituted, but there is a need to know how much time is “bought” by such a vaccination campaign. For routine rather than stopgap vaccination, the decision of when to boost or revaccinate will depend in part on the duration of herd immunity (DHI) following vaccination. Finally, mobility is recognized as an important factor for targeting vaccination, but it remains to be seen how strongly, and in what direction, population mobility should be considered.
+
+We study the model system of oral cholera vaccines to address these questions. Due to reliable vaccine efficacy and high coverage through mass campaigns, cholera vaccines can generate powerful herd protection effects [Ali 2005]. When a sufficient proportion of a population is immunized, the effective reproductive number can be reduced below one, a threshold commonly defined as herd immunity. 
+
+In this paper, we estimate the time-varying profile of oral cholera vaccine efficacy and use mathematical models to study the implications of vaccine waning and human mobility on herd protection. We apply our model to three case-study settings of Dhaka, Calcutta, and Juba. Finally, we provide a tool that can help guide decisions regarding the expected duration of herd immunity.
+
+
+## RESULTS
+
+
+Following the method Durham et al [1998], we estimate the time-varying vaccine efficacy using data from a set of published clinical trials, cohorts, and case-control studies [Table TBD]. We find that the whole-cell (WC) and B subunit killed whole-cell (BS-WC) vaccines provide some degree of protective efficacy for TBD and TBD years, respectively. 
+
+In the simplest setting with no births, deaths, or migration, mass vaccination can provide some herd protection as long as direct vaccine efficacy remains, which we estimate to be 3.7 years for the WC vaccine and 4.2 years for the BS-WC vaccine (Figure AA, dashed grey lines). The inclusion of migration can substantially decrease these durations. In a high-migration setting with an average duration of residence of 2 years, the duration of any herd protection decreases below three years for each (Figure AA, solid lines). Rates of birth and death rates must be unreasonably large in order to substantially alter the waning of herd protection – even conservative estimates of a life expectancy of 40 years only results in an approximately 2% decrease in the duration of herd protection \ref{fig_AA}, black lines.
+
+```{r fig_AA, ref.label = 'fig_AA', echo=FALSE, fig.width = 5, fig.height = 3, fig.cap="**Changes in the proportion of the population susceptible (X(t)) as a function of years since vaccination.** Population susceptibility following mass vaccination (100% coverage) of WC, BS-WC, and a hypothetical vaccine with VE=1 increases more quickly in the presence of high migration rates of 1/2 per year (solid lines) as compared to low migration rates of 1/20 per year (dotted lines) or no migration (dashed lines). High birth rates of 1/40 per year (black lines) are similar to no demographic births/deaths due to the relative rapidity of the other competing rates. For each vaccine, VE(t) can be inferred from the grey long-dashed lines, since all changes in susceptibility are therefore due to vaccine waning."}
+setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
+load(file = "src/Figure_AA.RData")
+
+ggplot(fig_AA_df_melt, aes(x = times/365, y = Re, linetype = mig_condition_name, color = birth_death_rate_condition_name)) + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years since Vaccination") + ylab("X(t)") + theme_bw() + scale_color_manual(values = c("black", "grey"), name = "Birth/Death Rate") + scale_linetype_discrete(name = "In/Out Migration Rate") + theme(text = element_text(size=8), legend.text=element_text(size=8), legend.title=element_text(size=8))
+```
+
+Of higher interest to policy-makers is not just the duration of any herd protection, but specifically the duration of herd immunity (DHI). Our primary metric of DHI is defined as the number of days following a vaccination campaign with an effective reproductive number (R¬e) below one. Figure VC shows the strong positive dependence of DHI on high initial vaccine coverage and low R¬0¬¬. In the presence of increasing migration and birth/death rates, DHI will shorten (Supplemental Information TBD). 
+
+Although deterministic models exhibit threshold-like behavior once the reproductive number exceeds one, an outbreak in a stochastic world is possible below the threshold and is not guaranteed above the threshold. For instance, if we assume a Poisson distribution of secondary cases and define an outbreak as at least ten transmission events following the introduction of a single infectious individual, the probability of an outbreak is 24.6% when the reproductive number equals one (Figure BB, horizontal grey line) and 79.7% when the reproductive number is 2 [Becker 2015]. Holding vaccine coverage at 100%, Figure BB shows that mass vaccination reduces, but not eliminates, the probability of an outbreak for a duration of time that depends critically on the vaccine efficacy profile and migration rate.  See Supplemental Information for dependence on other factors such as vaccine coverage, seasonality, and birth/death rates.
+
+In settings with strong seasonal variation in the force of infection, the duration of herd immunity can be extended by up to XXXX% via strategic vaccination. The timing of such strategic vaccination is challenging, however, as it depends on the seasonal forcing patterns, the transmission potential of the setting, the migration rate of the setting, and the vaccine coverage and waning profile. 
+
+In addition to its strong influence on the duration of herd immunity, we may also suspect that communities with higher migration rates are also more likely to have cholera imported. A natural extension of this model can be used to explore priority setting for remote versus highly mobile communities. Figure DD shows vaccine benefits may be maximized for communities with intermediate levels of connectedness, assuming the risk of cholera introduction is proportional to the rate of population turnover (e.g., the pathogen is introduced via migration). Intuitively, communities with low migration rates may retain herd immunity for a long time after vaccination, but are unlikely to have cholera introduced and therefore the probability of a cholera outbreak is always low. Conversely, highly mobile communities are more likely to have cholera introduced, but population turnover can quickly cause herd immunity to wane.
+
