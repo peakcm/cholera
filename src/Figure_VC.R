@@ -61,7 +61,7 @@ for (row in seq_len(sims)){
                  beta_phase_shift = 0,          # Phase shift in a sinusoidal seasonal forcing function
                  gamma=1/2,                     # Duration of disease
                  sigma=1/1.4,                   # Incubation period
-                 birth_death_rate=1/(365*40), # Average birth and death rate
+                 birth_death_rate=0*1/(365*40), # Average birth and death rate
                  nat_wane=0*1/(365*10),         # Rate of natural immunity waning
                  mig_in= 0,             # Rate of immigration
                  mig_out=0,             # Rate of emigration
