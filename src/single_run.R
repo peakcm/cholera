@@ -12,15 +12,15 @@ source("src/revaccination.R")
 require(ggplot2)
 
 #### Example input parms #####
-times <- seq(0,365*5)
+times <- seq(0,365*10)
 
 # Calculate elements of VE
 max_V_months = 48
 V_comps_per_month = 1 # choose from 0.5, 1, 1.5, etc.
 
 n.comps.V = max_V_months*V_comps_per_month
-# VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Shanchol",bound = TRUE)
-VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Dukoral",bound = TRUE,max_V_months = max_V_months)
+VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Shanchol",bound = TRUE,max_V_months = max_V_months)
+# VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Dukoral",bound = TRUE,max_V_months = max_V_months)
 # VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Perfect", bound = TRUE, max_V_months = max_V_months)
 
 params <- list(beta=0.6538415,                # Daily transmission parameter. From Guinea, beta=0.6538415
@@ -31,14 +31,14 @@ params <- list(beta=0.6538415,                # Daily transmission parameter. Fr
                sigma=1/1.4,                   # Incubation period
                birth_death_rate=0*1/(365*40), # Average birth and death rate
                nat_wane=0*1/(365*10),         # Rate of natural immunity waning
-               mig_in= 1/(365*2),             # Rate of immigration
-               mig_out=1/(365*2),             # Rate of emigration
+               mig_in= 1/(365*20),             # Rate of immigration
+               mig_out=1/(365*20),             # Rate of emigration
                foreign_infection=0.00,        # Proportion of immigrants who are infected
                n.comps.V=n.comps.V,           # Number of V compartments
                VE=VE,                         # Vaccine efficacy over time
                V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
                vac_freq = 365,                  # Days between re-vaccination campaigns
-               vac_frac = 0.5                   # Fraction of the population revaccinated during revaccination campaigns
+               vac_frac = 0.25                   # Fraction of the population revaccinated during revaccination campaigns
 )
 inits = rep(0, 6+params$n.comps.V)
 inits[1] = 100000 # initially susceptible
