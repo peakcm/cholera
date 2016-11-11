@@ -33,31 +33,48 @@ ui <- fluidPage(
                      "Basic Reproductive Number:",
                      min = 0.5,
                      max = 3,
-                     value = 1.25),
+                     value = 1.25,
+                     step = 0.05),
          sliderInput("VaxCov",
-                     "Vaccine Coverage:",
+                     "Initial Vaccine Coverage:",
                      min = 0,
                      max = 1,
-                     value = 1),
+                     value = 1,
+                     step = 0.01),
          radioButtons("VE_shape", 
                       "Vaccine:",
-                      choices = c("Shanchol", "Dukoral"),
-                      selected = "Shanchol"),
+                      choices = c("Dukoral", "Shanchol"),
+                      selected = "Dukoral"),
          sliderInput("mig",
                      "Average Residence Time (years):",
                      min = 1,
                      max = 40,
-                     value = 20),
+                     value = 20,
+                     step = 1),
          sliderInput("birth",
                      "Life Expectancy (years):",
                      min = 40,
                      max = 100,
-                     value = 70),
+                     value = 70,
+                     step = 10),
          sliderInput("beta_amp",
                      "Amplitude of Seasonality:",
                      min = 0,
                      max = 1,
-                     value = 0.2),
+                     value = 0.2,
+                     step = 0.1),
+         sliderInput("vac_freq",
+                     "Frequency of Revaccination (years):",
+                     min = 0,
+                     max = 10,
+                     value = 0,
+                     step = 0.5),
+         sliderInput("vac_frac",
+                     "Fraction Revaccinated:",
+                     min = 0,
+                     max = 1,
+                     value = 0,
+                     step = 0.01),
          radioButtons("outcome_of_interest",
                      "Outcome of Interest:",
                      choices=c("Effective Reproductive Number" = "Re", "Probability of Outbreak" = "prob"),
@@ -104,7 +121,10 @@ server <- function(input, output) {
                      foreign_infection=0.00,        # Proportion of immigrants who are infected
                      n.comps.V=n.comps.V,           # Number of V compartments
                      VE=VE,                         # Vaccine efficacy over time
-                     V_step=V_comps_per_month/30.5  # Average time in each vaccine compartment is one month
+                     V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
+                     
+                     vac_freq = round(input$vac_freq*365),                  # Days between re-vaccination campaigns
+                     vac_frac = input$vac_frac 
       )
       inits = rep(0, 6+params$n.comps.V)
       inits[1] = 100000*(1-input$VaxCov) # initially susceptible
