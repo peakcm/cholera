@@ -8,10 +8,11 @@ source("src/Seasonality.R")
 source("src/prob_outbreak_fcn.R")
 source("src/SIRV_model.R")
 source("src/Run_SIRV_model.R")
+source("src/revaccination.R")
 require(ggplot2)
 
 #### Example input parms #####
-times <- seq(0,356*10)
+times <- seq(0,365*5)
 
 # Calculate elements of VE
 max_V_months = 48
@@ -35,11 +36,13 @@ params <- list(beta=0.6538415,                # Daily transmission parameter. Fr
                foreign_infection=0.00,        # Proportion of immigrants who are infected
                n.comps.V=n.comps.V,           # Number of V compartments
                VE=VE,                         # Vaccine efficacy over time
-               V_step=V_comps_per_month/30.5  # Average time in each vaccine compartment is one month
+               V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
+               vac_freq = 365,                  # Days between re-vaccination campaigns
+               vac_frac = 0.5                   # Fraction of the population revaccinated during revaccination campaigns
 )
 inits = rep(0, 6+params$n.comps.V)
-inits[1] = 0000 # initially susceptible
-inits[2] = 100000 # initially vaccinated
+inits[1] = 100000 # initially susceptible
+inits[2] = 00000 # initially vaccinated
 inits[params$n.comps.V+3] = 0 # initially infected
 
 #### Test function ####
@@ -51,13 +54,14 @@ summary(apply(test.run[,c("S","E","I","R","V_total")], 1, sum))
 #### Plot results ####
 ggplot(test.run, aes(x = time/365, y = Re)) + geom_line() + geom_hline(yintercept=1, col="red") + 
   theme_bw() + xlab("Years") + ylab("R Effective") + scale_x_continuous(breaks = seq(0, 10, 1))
-# ggplot(test.run, aes(x = time/365)) +
-#   geom_line(aes(y=V_total), col="black", lty="dashed") +
-#   geom_line(aes(y=S), col="blue") +
-#   # geom_bar(aes(y=10*E), stat="identity", col="pink", alpha=0.1) +
-#   geom_bar(aes(y=10*I),stat="identity", col="darkred", alpha=0.1) +
-#   geom_line(aes(y=R), col="forestgreen") +
-#   theme_bw() + xlab("Years") + ylab("Number of People\nNote: 'I' are scaled by 10") + scale_x_continuous(breaks = seq(0, 10, 1))
+
+ggplot(test.run, aes(x = time/365)) +
+  geom_line(aes(y=V_total), col="black", lty="dashed") +
+  geom_line(aes(y=S), col="blue") +
+  # geom_bar(aes(y=10*E), stat="identity", col="pink", alpha=0.1) +
+  geom_bar(aes(y=10*I),stat="identity", col="darkred", alpha=0.1) +
+  geom_line(aes(y=R), col="forestgreen") +
+  theme_bw() + xlab("Years") + ylab("Number of People\nNote: 'I' are scaled by 10") + scale_x_continuous(breaks = seq(0, 10, 1))
 
 ggplot(test.run, aes(x = time/365, y = prob_outbreak_10)) + geom_line() + theme_bw() + xlab("Years") + ylab("Probability of\nan Outbreak") + scale_x_continuous(breaks=seq(0,10,1)) + scale_y_continuous(limits = c(0,1))
 

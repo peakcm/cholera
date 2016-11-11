@@ -1,6 +1,6 @@
 #### Header ####
 # Create an SIRV model that can account for many V compartments
-# Adapted from Azman 
+# Adapted from Azman et al. https://github.com/HopkinsIDD/singledose-ocv
 
 #### Adapted function ####
 SIRV.generic <- function(t,
@@ -23,18 +23,21 @@ SIRV.generic <- function(t,
   
   dV.1 <- numeric(params$n.comps.V) # Initialize with zeros
 
-    ## assign our state variables within the environment
+  ## assign our state variables within the environment
   for (y in seq_along(state.vars.all)) {assign(state.vars.all[y],x[y])}
   V.states.vector <- x[seq(1,params$n.comps.V)+1]
   names(V.states.vector) <- state.vars.all[seq(1,params$n.comps.V)+1]
   
   n.real.states <- length(x) - 2 # Don't count R and CI compartments
   N  <- sum(x[1:(4+params$n.comps.V)]) # Total pop 
-  
+
   ## force of infection (partitioned)
   lambda <- params$beta * I/N * beta_t_fcn(t, params$beta_shape, params$beta_amp, params$beta_phase_shift)
-  # lambda <- 0
   
+  ## revaccination
+  revax <- revaccination(t, params$vac_freq, params$vac_frac)
+  # print(c(t, revax))
+
   ## vaccine waning
   dV.states <- rep(0, params$n.comps.V)
   names(dV.states) <- paste0(rep(paste0("dV."), params$n.comps.V), 1:params$n.comps.V)
@@ -43,23 +46,23 @@ SIRV.generic <- function(t,
   
   for (y in seq_len(params$n.comps.V)){
     if (y==1){
-      dV.states[1] <- -params$V_step*V.states.vector[1] -lambda*V.states.vector[1]*(1-params$VE[1]) -params$mig_out*V.states.vector[1] -params$birth_death_rate*V.states.vector[1]
+      dV.states[1] <- -params$V_step*V.states.vector[1] -lambda*V.states.vector[1]*(1-params$VE[1]) -params$mig_out*V.states.vector[1] -params$birth_death_rate*V.states.vector[1] +revax*N
     } else {
-      dV.states[y] <- +params$V_step*V.states.vector[y-1] -params$V_step*V.states.vector[y] -lambda*V.states.vector[y]*(1-params$VE[y])  -params$mig_out*V.states.vector[y] -params$birth_death_rate*V.states.vector[y]
+      dV.states[y] <- +params$V_step*V.states.vector[y-1] -params$V_step*V.states.vector[y] -lambda*V.states.vector[y]*(1-params$VE[y])  -params$mig_out*V.states.vector[y] -params$birth_death_rate*V.states.vector[y] -revax*V.states.vector[y]
     }
   }
   
   ## susceptibles
-  dS <- params$nat_wane*R + params$V_step*V.states.vector[params$n.comps.V] +params$mig_in*(N*(1-params$foreign_infection)) +params$birth_death_rate*N -lambda*S -params$mig_out*S -params$birth_death_rate*S
+  dS <- params$nat_wane*R + as.numeric(params$V_step*V.states.vector[params$n.comps.V]) +params$mig_in*(N*(1-params$foreign_infection)) +params$birth_death_rate*N -lambda*S -params$mig_out*S -params$birth_death_rate*S -revax*S
   
   ## latent
-  dE  <- - params$sigma*E + lambda*S + sum(lambda*V.states.vector*(1-params$VE)) - params$mig_out*E -params$birth_death_rate*E
+  dE  <- - params$sigma*E + lambda*S + sum(lambda*V.states.vector*(1-params$VE)) - params$mig_out*E -params$birth_death_rate*E -revax*E
   
   ## infectious 
-  dI  <-  params$sigma*E + params$mig_in*(N*params$foreign_infection) - params$gamma*I -params$mig_out*I -params$birth_death_rate*I
+  dI  <-  params$sigma*E + params$mig_in*(N*params$foreign_infection) - params$gamma*I -params$mig_out*I -params$birth_death_rate*I -revax*I
   
   ## removed 
-  dR  <- params$gamma*I -params$nat_wane*R -params$mig_out*R -params$birth_death_rate*R
+  dR  <- params$gamma*I -params$nat_wane*R -params$mig_out*R -params$birth_death_rate*R -revax*R
   
   ## Water 
   dW <- 0
