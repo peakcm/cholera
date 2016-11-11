@@ -38,7 +38,7 @@ for (i in 1:nrow(df_diff)){
 }
 
 #### Plot ####
-ggplot() + geom_bar(data = df_diff, aes(x = mig_rate, y = diff, fill = "Difference"), stat = "identity") + geom_line(data = df, aes(x = mig_rate, y = prob_outbreak, color = vaccine_choice)) + theme_bw() + ylab("Probability of an Outbreak") + scale_color_discrete(name = "Vaccine Status") + scale_x_continuous(breaks = c(0.05, 0.20, 0.333, 0.5, 1/1.5, 1), labels = c("1/20", "1/5", "1/3", "1/2", "1/1.5", "1/1"), name = "Migration Rate (per year)") + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6)) + theme(legend.position = c(.8, .5)) + scale_fill_manual(name = element_blank(), values = "grey") + guides(color = guide_legend(order = 1))
+ggplot() + geom_bar(data = df_diff, aes(x = mig_rate, y = diff, fill = "Difference"), stat = "identity") + geom_line(data = df, aes(x = mig_rate, y = prob_outbreak, color = vaccine_choice)) + theme_bw() + ylab("5-year Probability of an Outbreak") + scale_color_discrete(name = "Vaccine Status") + scale_x_continuous(breaks = c(0.05, 0.20, 0.333, 0.5, 1/1.5, 1), labels = c("1/20", "1/5", "1/3", "1/2", "1/1.5", "1/1"), name = "Migration Rate (per year)") + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6)) + theme(legend.position = c(.8, .5)) + scale_fill_manual(name = element_blank(), values = "grey") + guides(color = guide_legend(order = 1))
 
 # Higher R, lower optimal Migration Rate. 
 # Higher seasonal amplitude, lower optimal Migration Rate
