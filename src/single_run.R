@@ -40,10 +40,11 @@ params <- list(beta=0.6538415,                # Daily transmission parameter. Fr
                vac_freq = 365,                  # Days between re-vaccination campaigns
                vac_frac = 0.25                   # Fraction of the population revaccinated during revaccination campaigns
 )
-inits = rep(0, 6+params$n.comps.V)
+inits = rep(0, 7+params$n.comps.V)
 inits[1] = 100000 # initially susceptible
-inits[2] = 00000 # initially vaccinated
+inits[2] = 100000 # initially vaccinated
 inits[params$n.comps.V+3] = 0 # initially infected
+inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
 
 #### Test function ####
 test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
@@ -64,6 +65,8 @@ ggplot(test.run, aes(x = time/365)) +
   theme_bw() + xlab("Years") + ylab("Number of People\nNote: 'I' are scaled by 10") + scale_x_continuous(breaks = seq(0, 10, 1))
 
 ggplot(test.run, aes(x = time/365, y = prob_outbreak_10)) + geom_line() + theme_bw() + xlab("Years") + ylab("Probability of\nan Outbreak") + scale_x_continuous(breaks=seq(0,10,1)) + scale_y_continuous(limits = c(0,1))
+
+ggplot(test.run, aes(x = time/365, y = Vax)) + geom_line() + theme_bw() + xlab("Years") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax)))
 
 #### Summarize results ####
 (return_to_R0 <- which(round(test.run$Re,3) >= 0.95*round(params$beta/params$gamma, 3))[1] / 365)
