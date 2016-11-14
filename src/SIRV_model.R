@@ -17,7 +17,8 @@ SIRV.generic <- function(t,
                       "I",
                       "R",
                       "W",
-                      "CI")
+                      "CI",
+                      "Vax")
   
   if (length(state.vars.all) != length(x)) stop("input state length not correct")
   
@@ -28,7 +29,6 @@ SIRV.generic <- function(t,
   V.states.vector <- x[seq(1,params$n.comps.V)+1]
   names(V.states.vector) <- state.vars.all[seq(1,params$n.comps.V)+1]
   
-  n.real.states <- length(x) - 2 # Don't count R and CI compartments
   N  <- sum(x[1:(4+params$n.comps.V)]) # Total pop 
 
   ## force of infection (partitioned)
@@ -70,13 +70,17 @@ SIRV.generic <- function(t,
   ## Cumulative Incidence 
   dCI  <- params$sigma*E #lambda*S #CI in unvaccinated class
   
+  ## Number of vaccine courses
+  dVax <- revax*N
+  
   out  <- c(dS = dS,
             dV.states,
             dE = dE,
             dI = dI,
             dR = dR,
             dW = dW,
-            dCI = dCI)
+            dCI = dCI,
+            dVax = dVax)
   
   return(list(out))
 }
