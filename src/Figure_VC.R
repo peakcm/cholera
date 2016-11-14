@@ -70,10 +70,11 @@ for (row in seq_len(sims)){
                  VE=fig_VC_df$VE_condition[row][[1]],                         # Vaccine efficacy over time
                  V_step=V_comps_per_month/30.5  # Average time in each vaccine compartment is one month
   )
-  inits = rep(0, 6+params$n.comps.V)
+  inits = rep(0, 7+params$n.comps.V)
   inits[1] = 100000*(1-fig_VC_df$VC_condition[row]) # initially susceptible
   inits[2] = 100000*(fig_VC_df$VC_condition[row]) # initially vaccinated
   inits[params$n.comps.V+3] = 0 # initially infected
+  inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
   
   # Run model
   output <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
