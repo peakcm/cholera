@@ -65,7 +65,10 @@ for (row in seq_len(sims)){
                  foreign_infection=0.00,        # Proportion of immigrants who are infected
                  n.comps.V=n.comps.V,           # Number of V compartments
                  VE=fig_EE_df$VE_condition[row][[1]],                         # Vaccine efficacy over time
-                 V_step=V_comps_per_month/30.5  # Average time in each vaccine compartment is one month
+                 V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
+                 vac_freq = 0,                  # Days between re-vaccination campaigns
+                 vac_frac = 0,                  # Fraction of the population revaccinated during revaccination campaigns
+                 vax_mig = 0                    # Fraction of immigrants vaccinated upon arrival
   )
   inits = rep(0, 7+params$n.comps.V)
   inits[1] = 00000 # initially susceptible
