@@ -170,16 +170,54 @@ server <- function(input, output) {
       #### Test function ####
       test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
     })
+    
+    model_no_vax <- reactive({
+      
+      VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = input$VE_shape, bound = TRUE, max_V_months = max_V_months)
+      
+      params <- list(beta=input$R_0/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
+                     beta_shape = "sinusoidal",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
+                     beta_amp = input$beta_amp,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
+                     beta_phase_shift = 0,          # Phase shift in a sinusoidal seasonal forcing function
+                     gamma=1/2,                     # Duration of disease
+                     sigma=1/1.4,                   # Incubation period
+                     birth_death_rate=1/(input$birth*365), # Average birth and death rate
+                     nat_wane=1/(365*10),         # Rate of natural immunity waning
+                     mig_in= 1/(input$mig*365),             # Rate of immigration
+                     mig_out=1/(input$mig*365),             # Rate of emigration
+                     foreign_infection=0.00,        # Proportion of immigrants who are infected
+                     n.comps.V=n.comps.V,           # Number of V compartments
+                     VE=VE,                         # Vaccine efficacy over time
+                     V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
+                     
+                     vac_routine_freq = 0,                  # Days between re-vaccination campaigns
+                     vac_routine_frac = 0,
+                     vac_birth_frac = 0,            # Fraction of babies vaccinated
+                     vac_mig_frac = 0,            # Fraction of immigrants vaccinated upon arrival
+                     vac_max = 0,                 # Maximum number of vaccines to be given
+                     vac_recip = input$vac_recip  # Recipients of vaccination ("all", "S", "migrant", "birth")
+      )
+      inits = rep(0, 7+params$n.comps.V)
+      inits[1] = 100000 # initially susceptible
+      inits[2] = 00000 # initially vaccinated
+      inits[params$n.comps.V+3] = 0 # initially infected
+      inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
+      
+      #### Test function ####
+      test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
+    })
   
   
     output$R_t <- renderPlot({
       if (input$outcome_of_interest %in% "Re"){
         ggplot(model(), aes(x = time/365, y = Re)) + geom_line()  + 
           theme_bw() + xlab("Years since Vaccination") + ylab("R Effective") + scale_x_continuous(breaks = seq(0, 5, 1)) +
-          ylim(0,max(3, input$R_0)) + geom_hline(yintercept=1, col="red")
+          ylim(0,max(3, input$R_0)) + geom_hline(yintercept=1, col="red") +
+          geom_line(data = model_no_vax(), aes(x = time/365, y = Re), col = "grey", lty = "dashed")
       } else if (input$outcome_of_interest %in% "prob"){
         ggplot(model(), aes(x = time/365, y = prob_outbreak_fcn(Re, input$outbreak_size))) + geom_line()  + 
-          theme_bw() + xlab("Years since Vaccination") + ylab(paste("Probability of >", input$outbreak_size, "cases")) + scale_x_continuous(breaks = seq(0, 5, 1)) + ylim(0,1)
+          theme_bw() + xlab("Years since Vaccination") + ylab(paste("Probability of >", input$outbreak_size, "cases")) + scale_x_continuous(breaks = seq(0, 5, 1)) + ylim(0,1) +
+          geom_line(data = model_no_vax(), aes(x = time/365, y = prob_outbreak_fcn(Re, input$outbreak_size)), col = "grey", lty = "dashed")
       }
      })
    
@@ -188,7 +226,7 @@ server <- function(input, output) {
    })  
    
    output$DHI <- renderText({
-     paste("The Cumulative Duration of Herd Immunity is: ", round(sum(round(model()$Re,3) < 1)/365, 2), " years.")
+     paste("Herd Immunity gained by Vaccination: ", round(sum(round(model()$Re,3) < 1)/365, 2) - round(sum(round(model_no_vax()$Re,3) < 1)/365, 2), "years.")
    })
    
    output$vax_consumed <- renderText({
