@@ -37,9 +37,10 @@ params <- list(beta=0.6538415,                # Daily transmission parameter. Fr
                n.comps.V=n.comps.V,           # Number of V compartments
                VE=VE,                         # Vaccine efficacy over time
                V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
-               vac_freq = 0,                  # Days between re-vaccination campaigns
+               vac_freq = 365,                  # Days between re-vaccination campaigns
                vac_frac = 0.25,               # Fraction of the population revaccinated during revaccination campaigns
-               vax_mig = 1                    # Fraction of immigrants vaccinated upon arrival
+               vax_mig = 0,                   # Fraction of immigrants vaccinated upon arrival
+               max_vax = 1000                 # Maximum number of vaccines to be given in a routine campaign
 )
 inits = rep(0, 7+params$n.comps.V)
 inits[1] = 100000 # initially susceptible

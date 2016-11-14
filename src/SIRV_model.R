@@ -35,7 +35,7 @@ SIRV.generic <- function(t,
   lambda <- params$beta * I/N * beta_t_fcn(t, params$beta_shape, params$beta_amp, params$beta_phase_shift)
   
   ## revaccination
-  revax <- revaccination(t, params$vac_freq, params$vac_frac)
+  revax <- min(params$max_vax/N, revaccination(t, params$vac_freq, params$vac_frac)) # Fraction of pop to be vaccinated
   # print(c(t, revax))
 
   ## vaccine waning
