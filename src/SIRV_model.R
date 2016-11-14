@@ -35,14 +35,7 @@ SIRV.generic <- function(t,
   lambda <- params$beta * I/N * beta_t_fcn(t, params$beta_shape, params$beta_amp, params$beta_phase_shift)
   
   ## revaccination
-  revax <- N*revaccination(t, params$vac_freq, params$vac_frac) # Number of vaccines to be allocated today
-  if ( Vax > params$max_vax){
-    vax_remaining <- 0
-  } else {
-    vax_remaining <- 1
-    revax <- min(revax, params$max_vax - Vax)
-    }
-  # print(c(t, revax))
+  revax_out <- revaccination(t = t, N = N, S = S, V.states.vector =  V.states.vector, Vax =  Vax, vac_routine_freq =  params$vac_routine_freq, vac_routine_frac = params$vac_routine_frac, vac_mig_frac = params$vac_mig_frac, vac_recip = params$vac_recip, vac_max = params$vac_max, birth_rate = params$birth_death_rate, mig_in = params$mig_in, vac_birth_frac = params$vac_birth_frac)
 
   ## vaccine waning
   dV.states <- rep(0, params$n.comps.V)
@@ -52,23 +45,23 @@ SIRV.generic <- function(t,
   
   for (y in seq_len(params$n.comps.V)){
     if (y==1){
-      dV.states[1] <- -params$V_step*V.states.vector[1] -lambda*V.states.vector[1]*(1-params$VE[1]) -params$mig_out*V.states.vector[1] -params$birth_death_rate*V.states.vector[1] -revax*V.states.vector[1]/N*vax_remaining +revax*vax_remaining +params$mig_in*(N*(1-params$foreign_infection))*(params$vax_mig)*vax_remaining
+      dV.states[1] <- -params$V_step*V.states.vector[1] -lambda*V.states.vector[1]*(1-params$VE[1]) -params$mig_out*V.states.vector[1] -params$birth_death_rate*V.states.vector[1] -revax_out$routine_V[1] +sum(revax_out$routine_S, revax_out$routine_V, revax_out$birth, revax_out$migrant)
     } else {
-      dV.states[y] <- +params$V_step*V.states.vector[y-1] -params$V_step*V.states.vector[y] -lambda*V.states.vector[y]*(1-params$VE[y])  -params$mig_out*V.states.vector[y] -params$birth_death_rate*V.states.vector[y] -revax*V.states.vector[y]/N*vax_remaining
+      dV.states[y] <- +params$V_step*V.states.vector[y-1] -params$V_step*V.states.vector[y] -lambda*V.states.vector[y]*(1-params$VE[y])  -params$mig_out*V.states.vector[y] -params$birth_death_rate*V.states.vector[y] -revax_out$routine_V[y]
     }
   }
   
   ## susceptibles
-  dS <- params$nat_wane*R + as.numeric(params$V_step*V.states.vector[params$n.comps.V]) +params$mig_in*(N*(1-params$foreign_infection))*(1-params$vax_mig) +params$birth_death_rate*N -lambda*S -params$mig_out*S -params$birth_death_rate*S -revax*S/N*vax_remaining
+  dS <- params$nat_wane*R + as.numeric(params$V_step*V.states.vector[params$n.comps.V]) +params$mig_in*(N*(1-params$foreign_infection)) +params$birth_death_rate*N -lambda*S -params$mig_out*S -params$birth_death_rate*S -revax_out$routine_S -revax_out$birth - revax_out$migrant
   
   ## latent
-  dE  <- - params$sigma*E + lambda*S + sum(lambda*V.states.vector*(1-params$VE)) - params$mig_out*E -params$birth_death_rate*E -revax*E/N*vax_remaining
+  dE  <- - params$sigma*E + lambda*S + sum(lambda*V.states.vector*(1-params$VE)) - params$mig_out*E -params$birth_death_rate*E 
   
   ## infectious 
-  dI  <-  params$sigma*E + params$mig_in*(N*params$foreign_infection) - params$gamma*I -params$mig_out*I -params$birth_death_rate*I -revax*I/N*vax_remaining
+  dI  <-  params$sigma*E + params$mig_in*(N*params$foreign_infection) - params$gamma*I -params$mig_out*I -params$birth_death_rate*I
   
   ## removed 
-  dR  <- params$gamma*I -params$nat_wane*R -params$mig_out*R -params$birth_death_rate*R -revax*R/N*vax_remaining
+  dR  <- params$gamma*I -params$nat_wane*R -params$mig_out*R -params$birth_death_rate*R
   
   ## Water 
   dW <- 0
@@ -77,7 +70,7 @@ SIRV.generic <- function(t,
   dCI  <- params$sigma*E #lambda*S #CI in unvaccinated class
   
   ## Number of vaccine courses
-  dVax <- revax*vax_remaining + params$mig_in*(N*(1-params$foreign_infection))*(params$vax_mig)*vax_remaining
+  dVax <- sum(revax_out$routine_S, revax_out$routine_V, revax_out$birth, revax_out$migrant)
   
   out  <- c(dS = dS,
             dV.states,

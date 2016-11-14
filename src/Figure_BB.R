@@ -67,10 +67,12 @@ for (row in seq_len(sims)){
                  n.comps.V=n.comps.V,           # Number of V compartments
                  VE=fig_BB_df$VE_condition[row][[1]],                         # Vaccine efficacy over time
                  V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
-                 vac_freq = 0,                  # Days between re-vaccination campaigns
-                 vac_frac = 0,                  # Fraction of the population revaccinated during revaccination campaigns
-                 vax_mig = 0,                   # Fraction of immigrants vaccinated upon arrival
-                 max_vax = 1e10                 # Maximum number of vaccines to be given in a routine campaign
+                 vac_routine_freq = 0,          # Days between routine re-vaccination campaigns
+                 vac_routine_frac = 0,          # Fraction of the population revaccinated during routine revaccination campaigns
+                 vac_birth_frac = 0,            # Fraction of babies vaccinated
+                 vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
+                 vac_max = 5e50,                # Maximum number of vaccines to be given
+                 vac_recip = c("all")  # Recipients of vaccination ("all", "S", "migrant", "birth")
   )
   inits = rep(0, 7+params$n.comps.V)
   inits[1] = 0000 # initially susceptible
