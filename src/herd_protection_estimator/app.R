@@ -134,6 +134,7 @@ server <- function(input, output) {
     max_V_months = 48
     V_comps_per_month = 0.5 # choose from 0.5, 1, 1.5, etc.
     n.comps.V = max_V_months*V_comps_per_month
+    N = 1e5
     
     model <- reactive({
       
@@ -162,8 +163,8 @@ server <- function(input, output) {
                      vac_recip = input$vac_recip  # Recipients of vaccination ("all", "S", "migrant", "birth")
       )
       inits = rep(0, 7+params$n.comps.V)
-      inits[1] = 100000*(1-input$VaxCov) # initially susceptible
-      inits[2] = 100000*(input$VaxCov) # initially vaccinated
+      inits[1] = N*(1-input$VaxCov) # initially susceptible
+      inits[2] = N*(input$VaxCov) # initially vaccinated
       inits[params$n.comps.V+3] = 0 # initially infected
       inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
       
@@ -198,8 +199,8 @@ server <- function(input, output) {
                      vac_recip = input$vac_recip  # Recipients of vaccination ("all", "S", "migrant", "birth")
       )
       inits = rep(0, 7+params$n.comps.V)
-      inits[1] = 100000 # initially susceptible
-      inits[2] = 00000 # initially vaccinated
+      inits[1] = N # initially susceptible
+      inits[2] = 0 # initially vaccinated
       inits[params$n.comps.V+3] = 0 # initially infected
       inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
       
