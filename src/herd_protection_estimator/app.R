@@ -22,13 +22,18 @@ require(shiny)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-   
+  tags$head(tags$style(HTML("
+        .selectize-input, .selectize-dropdown {
+                            font-size: 50%;
+                            }
+                            "))),
    # Application title
    titlePanel("Herd Immunity Estimator"),
    
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
-      sidebarPanel(
+      column(2,
+        # submitButton("Submit"),
          sliderInput("R_0",
                      "Basic Reproductive Number:",
                      min = 0.5,
@@ -73,7 +78,7 @@ ui <- fluidPage(
                      "Fraction Revaccinated:",
                      min = 0,
                      max = 1,
-                     value = 0,
+                     value = 0.5,
                      step = 0.01),
          radioButtons("outcome_of_interest",
                      "Outcome of Interest:",
@@ -87,7 +92,7 @@ ui <- fluidPage(
       ),
       
       # Show a plot of the generated distribution
-      mainPanel(
+      column(6,
          plotOutput("R_t"),
          textOutput("lose_herd"),
          textOutput("DHI")
