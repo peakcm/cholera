@@ -16,6 +16,7 @@ source("src/Seasonality.R")
 source("src/prob_outbreak_fcn.R")
 source("src/SIRV_model.R")
 source("src/Run_SIRV_model.R")
+source("src/revaccination.R")
 require(ggplot2)
 
 require(shiny)
@@ -34,6 +35,7 @@ ui <- fluidPage(
   
   textOutput("lose_herd"),
   textOutput("DHI"),
+  textOutput("vax_consumed"),
   
   hr(),
   
@@ -56,7 +58,16 @@ ui <- fluidPage(
        radioButtons("VE_shape", 
                     "Vaccine:",
                     choices = c("Dukoral", "Shanchol"),
-                    selected = "Dukoral")),
+                    selected = "Dukoral"),
+      radioButtons("outcome_of_interest",
+                   "Outcome of Interest:",
+                   choices=c("Effective Reproductive Number" = "Re", "Probability of Outbreak" = "prob"),
+                   selected = "Re"),
+      sliderInput("outbreak_size",
+                  "Minimum size of 'Outbreak':",
+                  min = 1, 
+                  max = 100,
+                  value = 10)),
     column(3, offset = 1,
        sliderInput("mig",
                    "Average Residence Time (years):",
@@ -77,28 +88,42 @@ ui <- fluidPage(
                    value = 0.2,
                    step = 0.1)),
     column(3, offset = 1,
-       sliderInput("vac_freq",
-                   "Frequency of Revaccination (years):",
-                   min = 0,
-                   max = 10,
-                   value = 0,
-                   step = 0.5),
-       sliderInput("vac_frac",
-                   "Fraction Revaccinated:",
+         checkboxGroupInput("vac_recip",
+                            "Ongoing Vaccine Recipients:", 
+                            choices = c("Births" = "birth", "Migrants" = "migrant", "Routine for Susceptibles" = "S", "Routine for All" = "all"),
+                            selected = c("all")),
+         sliderInput("vac_routine_freq",
+                 "Frequency of Routine Revaccination (years):",
+                 min = 0,
+                 max = 10,
+                 value = 0,
+                 step = 1),
+       sliderInput("vac_routine_frac",
+                   "Fraction Vaccinated (Routinely):",
                    min = 0,
                    max = 1,
-                   value = 0.5,
+                   value = 1,
                    step = 0.01),
-       radioButtons("outcome_of_interest",
-                   "Outcome of Interest:",
-                   choices=c("Effective Reproductive Number" = "Re", "Probability of Outbreak" = "prob"),
-                   selected = "Re"),
-       sliderInput("outbreak_size",
-                   "Minimum size of 'Outbreak':",
-                   min = 1, 
-                   max = 100,
-                   value = 10))
-   )
+       sliderInput("vac_birth_frac",
+                   "Fraction Vaccinated (Birth):",
+                   min = 0,
+                   max = 1,
+                   value = 1,
+                   step = 0.01),
+       sliderInput("vac_mig_frac",
+                   "Fraction Vaccinated (Immigrants):",
+                   min = 0,
+                   max = 1,
+                   value = 1,
+                   step = 0.01),
+       sliderInput("vac_max",
+                   "Maximum Vaccine Courses Allocated:",
+                   min = 0,
+                   max = 5e5,
+                   value = 5e5,
+                   step = 1e4)
+    )
+ )
 )
 
 # Define server logic required to draw a histogram
@@ -129,13 +154,18 @@ server <- function(input, output) {
                      VE=VE,                         # Vaccine efficacy over time
                      V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
                      
-                     vac_freq = round(input$vac_freq*365),                  # Days between re-vaccination campaigns
-                     vac_frac = input$vac_frac 
+                     vac_routine_freq = round(input$vac_routine_freq*365),                  # Days between re-vaccination campaigns
+                     vac_routine_frac = input$vac_routine_frac,
+                     vac_birth_frac = input$vac_birth_frac,            # Fraction of babies vaccinated
+                     vac_mig_frac = input$vac_mig_frac,            # Fraction of immigrants vaccinated upon arrival
+                     vac_max = input$vac_max,                 # Maximum number of vaccines to be given
+                     vac_recip = input$vac_recip  # Recipients of vaccination ("all", "S", "migrant", "birth")
       )
-      inits = rep(0, 6+params$n.comps.V)
+      inits = rep(0, 7+params$n.comps.V)
       inits[1] = 100000*(1-input$VaxCov) # initially susceptible
       inits[2] = 100000*(input$VaxCov) # initially vaccinated
       inits[params$n.comps.V+3] = 0 # initially infected
+      inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
       
       #### Test function ####
       test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
@@ -159,6 +189,10 @@ server <- function(input, output) {
    
    output$DHI <- renderText({
      paste("The Cumulative Duration of Herd Immunity is: ", round(sum(round(model()$Re,3) < 1)/365, 2), " years.")
+   })
+   
+   output$vax_consumed <- renderText({
+     paste("The number of vaccine courses consumed is: ", round(max(model()$Vax)), "(", round(100*max(model()$Vax)/input$vac_max), "% of the", input$vac_max, "allocated )")
    })
    
 }
