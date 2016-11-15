@@ -37,12 +37,14 @@ ui <- fluidPage(
   textOutput("DHI"),
   textOutput("vax_consumed"),
   
+  submitButton("Submit"),
+  
+  
   hr(),
   
  # Sidebar with a slider input for number of bins 
  fluidRow(
     column(3,
-      # submitButton("Submit"),
        sliderInput("R_0",
                    "Basic Reproductive Number:",
                    min = 0.5,
@@ -212,12 +214,12 @@ server <- function(input, output) {
     output$R_t <- renderPlot({
       if (input$outcome_of_interest %in% "Re"){
         ggplot(model(), aes(x = time/365, y = Re)) + geom_line()  + 
-          theme_bw() + xlab("Years since Vaccination") + ylab("R Effective") + scale_x_continuous(breaks = seq(0, 5, 1)) +
+          theme_bw() + xlab("Years since Initial Vaccination") + ylab("R Effective") + scale_x_continuous(breaks = seq(0, 5, 1)) +
           ylim(0,max(3, input$R_0)) + geom_hline(yintercept=1, col="red") +
           geom_line(data = model_no_vax(), aes(x = time/365, y = Re), col = "grey", lty = "dashed")
       } else if (input$outcome_of_interest %in% "prob"){
         ggplot(model(), aes(x = time/365, y = prob_outbreak_fcn(Re, input$outbreak_size))) + geom_line()  + 
-          theme_bw() + xlab("Years since Vaccination") + ylab(paste("Probability of >", input$outbreak_size, "cases")) + scale_x_continuous(breaks = seq(0, 5, 1)) + ylim(0,1) +
+          theme_bw() + xlab("Years since Initial Vaccination") + ylab(paste("Probability of >", input$outbreak_size, "cases")) + scale_x_continuous(breaks = seq(0, 5, 1)) + ylim(0,1) +
           geom_line(data = model_no_vax(), aes(x = time/365, y = prob_outbreak_fcn(Re, input$outbreak_size)), col = "grey", lty = "dashed")
       }
      })
@@ -231,7 +233,7 @@ server <- function(input, output) {
    })
    
    output$vax_consumed <- renderText({
-     paste("The number of vaccine courses consumed is: ", round(max(model()$Vax)), "(", round(100*max(model()$Vax)/input$vac_max), "% of the", input$vac_max, "allocated )")
+     paste("The number of vaccine courses consumed is: ", round(max(model()$Vax)), "(", round(100*max(model()$Vax)/input$vac_max), "% of the", input$vac_max, "allotted )")
    })
    
 }
