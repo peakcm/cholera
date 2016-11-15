@@ -1,16 +1,18 @@
 #### Function to perform revaccination ####
 
-revaccination <- function(t, N, S, V.states.vector, Vax, vac_mass_freq, vac_mass_frac, vac_mig_frac, vac_recip, vac_max, birth_rate, mig_in, vac_birth_frac){
+revaccination <- function(t, N, S, V.states.vector, Vax, vac_routine_frac, vac_mass_freq, vac_mass_frac, vac_mig_frac, vac_recip, vac_max, birth_rate, mig_in, vac_birth_frac){
   # In the ODE, the entire compartment cannot move at once, so the vaccine fraction needs to be reduced
+  if(vac_routine_frac > 0.99){vac_routine_frac <- 0.99}
   if(vac_mass_frac > 0.99){vac_mass_frac <- 0.99}
   
   vax_rem <- vac_max - Vax
 
   # Initalize
-  mass_S <- 0
-  mass_V <- rep(0, length(V.states.vector))
   birth     <- 0
   migrant   <- 0
+  routine_S <- 0
+  mass_S <- 0
+  mass_V <- rep(0, length(V.states.vector))
 
   if ( as.numeric(vax_rem) > 0 ){
 
@@ -25,17 +27,23 @@ revaccination <- function(t, N, S, V.states.vector, Vax, vac_mass_freq, vac_mass
       migrant <- as.numeric(min(vax_rem, mig_in*N*vac_mig_frac))
       vax_rem <- vax_rem - migrant
     }
+    
+    # Give third priority to routine vaccination of susceptible people
+    if (vax_rem > 0 && "routine_S" %in% vac_recip){
+      routine_S <- as.numeric(min(vax_rem, S*vac_routine_frac))
+      vax_rem <- vax_rem - routine_S
+    }
 
-    # Give third priority to mass vaccination of susceptible people
-    if (vax_rem > 0 && ("all" %in% vac_recip | "S" %in% vac_recip)){
+    # Give fourth priority to mass vaccination of susceptible people
+    if (vax_rem > 0 && ("mass_all" %in% vac_recip | "mass_S" %in% vac_recip)){
       if (t >= 1 && vac_mass_freq*vac_mass_frac > 0 && (round(t) %% vac_mass_freq) == 0){ # If today is the day of a mass revaccination
-        mass_S <- as.numeric(min(vax_rem, S*vac_mass_frac))
+        mass_S <- as.numeric(min(vax_rem, (S-routine_S)*vac_mass_frac))
         vax_rem    <- vax_rem - mass_S
       }
     }
 
-    # Give final priority to mass vaccination of those vaccinated the longest time ago
-    if (vax_rem > 0 && "all" %in% vac_recip){
+    # Give fifth priority to mass vaccination of those vaccinated the longest time ago
+    if (vax_rem > 0 && "mass_all" %in% vac_recip){
       if (t >= 1 && vac_mass_freq*vac_mass_frac > 0 && (round(t) %% vac_mass_freq) == 0){ # If today is the day of a mass revaccination
         V.states.vector_reverse_cumsum <- rev(cumsum(rev(V.states.vector*vac_mass_frac))) # cumsum from the back of the vector
         mass_V <- as.numeric(V.states.vector*vac_mass_frac* (V.states.vector_reverse_cumsum < as.numeric(vax_rem))) # Results in a little bit of vaccine wastage
@@ -46,16 +54,23 @@ revaccination <- function(t, N, S, V.states.vector, Vax, vac_mass_freq, vac_mass
   # Convert from the desired number to vaccinate to the desired fraction of each compartment
     # Note that the fraction cannot be 1 because the rate would be infinite. This was adjusted for at the beginning of the function
   if (S > 0){
+    routine_S_frac <- as.numeric(routine_S / S)
     mass_S_frac <- as.numeric(mass_S / S)
-  } else {mass_S_frac <- 0}
+  } else {
+    routine_S_frac <- 0
+    mass_S_frac <- 0
+    }
   mass_V_frac <- as.numeric(mass_V/V.states.vector)
   mass_V_frac[which(is.nan(mass_V_frac))] <- 0
   
   # Convert from the desired fraction to the desired transition rate for the ode
-  mass_S_rate = as.numeric(S * -log(1-mass_S_frac, base = exp(1)))
+  routine_S_rate = as.numeric(S * -log(1-routine_S_frac, base = exp(1)))
+  mass_S_rate = as.numeric((S-routine_S) * -log(1-mass_S_frac, base = exp(1)))
   mass_V_rate = as.numeric(V.states.vector * sapply(mass_V_frac, function(x) -log(1-x, base = exp(1))))
   
-  return(list(mass_S = mass_S,
+  return(list(routine_S = routine_S,
+              routine_S_rate = routine_S_rate,
+              mass_S = mass_S,
               mass_S_rate = mass_S_rate,
               mass_V = mass_V,
               mass_V_rate = mass_V_rate,
