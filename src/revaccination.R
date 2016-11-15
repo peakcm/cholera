@@ -26,17 +26,17 @@ revaccination <- function(t, N, S, V.states.vector, Vax, vac_mass_freq, vac_mass
       vax_rem <- vax_rem - migrant
     }
 
-    # Give third priority to routine vaccination of susceptible people
+    # Give third priority to mass vaccination of susceptible people
     if (vax_rem > 0 && ("all" %in% vac_recip | "S" %in% vac_recip)){
-      if (t >= 1 && vac_mass_freq*vac_mass_frac > 0 && (round(t) %% vac_mass_freq) == 0){ # If today is the day of a routine revaccination
+      if (t >= 1 && vac_mass_freq*vac_mass_frac > 0 && (round(t) %% vac_mass_freq) == 0){ # If today is the day of a mass revaccination
         mass_S <- as.numeric(min(vax_rem, S*vac_mass_frac))
-        vax_rem    <- vax_rem - routine_S
+        vax_rem    <- vax_rem - mass_S
       }
     }
 
-    # Give final priority to routine vaccination of those vaccinated the longest time ago
+    # Give final priority to mass vaccination of those vaccinated the longest time ago
     if (vax_rem > 0 && "all" %in% vac_recip){
-      if (t >= 1 && vac_mass_freq*vac_mass_frac > 0 && (round(t) %% vac_mass_freq) == 0){ # If today is the day of a routine revaccination
+      if (t >= 1 && vac_mass_freq*vac_mass_frac > 0 && (round(t) %% vac_mass_freq) == 0){ # If today is the day of a mass revaccination
         V.states.vector_reverse_cumsum <- rev(cumsum(rev(V.states.vector*vac_mass_frac))) # cumsum from the back of the vector
         mass_V <- as.numeric(V.states.vector*vac_mass_frac* (V.states.vector_reverse_cumsum < as.numeric(vax_rem))) # Results in a little bit of vaccine wastage
       }
@@ -47,7 +47,7 @@ revaccination <- function(t, N, S, V.states.vector, Vax, vac_mass_freq, vac_mass
     # Note that the fraction cannot be 1 because the rate would be infinite. This was adjusted for at the beginning of the function
   if (S > 0){
     mass_S_frac <- as.numeric(mass_S / S)
-  } else {routine_S_frac <- 0}
+  } else {mass_S_frac <- 0}
   mass_V_frac <- as.numeric(mass_V/V.states.vector)
   mass_V_frac[which(is.nan(mass_V_frac))] <- 0
   
