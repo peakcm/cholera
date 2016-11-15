@@ -32,7 +32,7 @@ SIRV.generic <- function(t,
   N  <- sum(x[1:(4+params$n.comps.V)]) # Total pop 
 
   ## force of infection (partitioned)
-  lambda <- params$beta * I/N * beta_t_fcn(t, params$beta_shape, params$beta_amp, params$beta_phase_shift)
+  lambda <- as.numeric(params$beta * I/N * beta_t_fcn(t, params$beta_shape, params$beta_amp, params$beta_phase_shift))
   
   ## revaccination
   revax_out <- revaccination(t = t, N = N, S = S, V.states.vector =  V.states.vector, Vax =  Vax, vac_routine_freq =  params$vac_routine_freq, vac_routine_frac = params$vac_routine_frac, vac_mig_frac = params$vac_mig_frac, vac_recip = params$vac_recip, vac_max = params$vac_max, birth_rate = params$birth_death_rate, mig_in = params$mig_in, vac_birth_frac = params$vac_birth_frac)
@@ -52,22 +52,22 @@ SIRV.generic <- function(t,
   }
   
   ## susceptibles
-  dS <- params$nat_wane*R + as.numeric(params$V_step*V.states.vector[params$n.comps.V]) +params$mig_in*(N*(1-params$foreign_infection)) +params$birth_death_rate*N -lambda*S -params$mig_out*S -params$birth_death_rate*S -revax_out$routine_S -revax_out$birth - revax_out$migrant
+  dS <- as.numeric(params$nat_wane*R + as.numeric(params$V_step*V.states.vector[params$n.comps.V]) +params$mig_in*(N*(1-params$foreign_infection)) +params$birth_death_rate*N -lambda*S -params$mig_out*S -params$birth_death_rate*S -revax_out$routine_S -revax_out$birth - revax_out$migrant)
   
   ## latent
-  dE  <- - params$sigma*E + lambda*S + sum(lambda*V.states.vector*(1-params$VE)) - params$mig_out*E -params$birth_death_rate*E 
+  dE  <- as.numeric(- params$sigma*E + lambda*S + sum(lambda*V.states.vector*(1-params$VE)) - params$mig_out*E -params$birth_death_rate*E)
   
   ## infectious 
-  dI  <-  params$sigma*E + params$mig_in*(N*params$foreign_infection) - params$gamma*I -params$mig_out*I -params$birth_death_rate*I
+  dI  <-  as.numeric(params$sigma*E + params$mig_in*(N*params$foreign_infection) - params$gamma*I -params$mig_out*I -params$birth_death_rate*I)
   
   ## removed 
-  dR  <- params$gamma*I -params$nat_wane*R -params$mig_out*R -params$birth_death_rate*R
+  dR  <- as.numeric(params$gamma*I -params$nat_wane*R -params$mig_out*R -params$birth_death_rate*R)
   
   ## Water 
   dW <- 0
   
   ## Cumulative Incidence 
-  dCI  <- params$sigma*E #lambda*S #CI in unvaccinated class
+  dCI  <- as.numeric(params$sigma*E) #lambda*S #CI in unvaccinated class
   
   ## Number of vaccine courses
   dVax <- sum(revax_out$routine_S, revax_out$routine_V, revax_out$birth, revax_out$migrant)
