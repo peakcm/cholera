@@ -35,7 +35,7 @@ SIRV.generic <- function(t,
   lambda <- as.numeric(params$beta * I/N * beta_t_fcn(t, params$beta_shape, params$beta_amp, params$beta_phase_shift))
   
   ## revaccination
-  revax_out <- revaccination(t = t, N = N, S = S, V.states.vector =  V.states.vector, Vax =  Vax, vac_routine_freq =  params$vac_routine_freq, vac_routine_frac = params$vac_routine_frac, vac_mig_frac = params$vac_mig_frac, vac_recip = params$vac_recip, vac_max = params$vac_max, birth_rate = params$birth_death_rate, mig_in = params$mig_in, vac_birth_frac = params$vac_birth_frac)
+  revax_out <- revaccination(t = t, N = N, S = S, V.states.vector =  V.states.vector, Vax =  Vax, vac_mass_freq =  params$vac_mass_freq, vac_mass_frac = params$vac_mass_frac, vac_mig_frac = params$vac_mig_frac, vac_recip = params$vac_recip, vac_max = params$vac_max, birth_rate = params$birth_death_rate, mig_in = params$mig_in, vac_birth_frac = params$vac_birth_frac)
 
   ## vaccine waning
   dV.states <- rep(0, params$n.comps.V)
@@ -44,24 +44,24 @@ SIRV.generic <- function(t,
   if (length(dV.states) != length(params$VE)) stop("length of params$VE does not match number of V.states")
   
     # Special case for the first vaccine state because it receives new vaccinees
-  dV.states[1] <- -params$V_step*V.states.vector[1] -lambda*V.states.vector[1]*(1-params$VE[1]) -params$mig_out*V.states.vector[1] -params$birth_death_rate*V.states.vector[1] -revax_out$routine_V_rate[1] +sum(revax_out$routine_S_rate, revax_out$routine_V_rate, revax_out$birth, revax_out$migrant)
+  dV.states[1] <- -params$V_step*V.states.vector[1] -lambda*V.states.vector[1]*(1-params$VE[1]) -params$mig_out*V.states.vector[1] -params$birth_death_rate*V.states.vector[1] -revax_out$mass_V_rate[1] +sum(revax_out$mass_S_rate, revax_out$mass_V_rate, revax_out$birth, revax_out$migrant)
   
     # For other vaccine states, need to create a temporary data frame that lines up the current V members and the lagged members so we can use an apply function to advance people instead of using a loop. See next section with the looped version (commented out)
-  temp.V.states.df <- data.frame(orig = as.numeric(V.states.vector[2:params$n.comps.V]), lag_1 = as.numeric(V.states.vector[1:(params$n.comps.V-1)]), VE = params$VE[2:params$n.comps.V], routine_V_rate = revax_out$routine_V_rate[2:params$n.comps.V])
-  dV.states[2:params$n.comps.V] <- apply(temp.V.states.df, 1, function(x) params$V_step*x["lag_1"] -params$V_step*x["orig"] -lambda*x["orig"]*(1-x["VE"]) -params$mig_out*x["orig"] -params$birth_death_rate*x["orig"] -x["routine_V_rate"])
+  temp.V.states.df <- data.frame(orig = as.numeric(V.states.vector[2:params$n.comps.V]), lag_1 = as.numeric(V.states.vector[1:(params$n.comps.V-1)]), VE = params$VE[2:params$n.comps.V], mass_V_rate = revax_out$mass_V_rate[2:params$n.comps.V])
+  dV.states[2:params$n.comps.V] <- apply(temp.V.states.df, 1, function(x) params$V_step*x["lag_1"] -params$V_step*x["orig"] -lambda*x["orig"]*(1-x["VE"]) -params$mig_out*x["orig"] -params$birth_death_rate*x["orig"] -x["mass_V_rate"])
   rm("temp.V.states.df")
   
     # Slower version of updating states using loop instead of apply
   # for (y in seq_len(params$n.comps.V)){
   #   if (y==1){
-  #     dV.states[1] <- -params$V_step*V.states.vector[1] -lambda*V.states.vector[1]*(1-params$VE[1]) -params$mig_out*V.states.vector[1] -params$birth_death_rate*V.states.vector[1] -revax_out$routine_V_rate[1] +sum(revax_out$routine_S_rate, revax_out$routine_V_rate, revax_out$birth, revax_out$migrant)
+  #     dV.states[1] <- -params$V_step*V.states.vector[1] -lambda*V.states.vector[1]*(1-params$VE[1]) -params$mig_out*V.states.vector[1] -params$birth_death_rate*V.states.vector[1] -revax_out$mass_V_rate[1] +sum(revax_out$mass_S_rate, revax_out$mass_V_rate, revax_out$birth, revax_out$migrant)
   #   } else {
-  #     dV.states[y] <- +params$V_step*V.states.vector[y-1] -params$V_step*V.states.vector[y] -lambda*V.states.vector[y]*(1-params$VE[y])  -params$mig_out*V.states.vector[y] -params$birth_death_rate*V.states.vector[y] -revax_out$routine_V_rate[y]
+  #     dV.states[y] <- +params$V_step*V.states.vector[y-1] -params$V_step*V.states.vector[y] -lambda*V.states.vector[y]*(1-params$VE[y])  -params$mig_out*V.states.vector[y] -params$birth_death_rate*V.states.vector[y] -revax_out$mass_V_rate[y]
   #   }
   # }
   
   ## susceptibles
-  dS <- as.numeric(params$nat_wane*R + as.numeric(params$V_step*V.states.vector[params$n.comps.V]) +params$mig_in*(N*(1-params$foreign_infection)) +params$birth_death_rate*N -lambda*S -params$mig_out*S -params$birth_death_rate*S -revax_out$routine_S_rate -revax_out$birth - revax_out$migrant)
+  dS <- as.numeric(params$nat_wane*R + as.numeric(params$V_step*V.states.vector[params$n.comps.V]) +params$mig_in*(N*(1-params$foreign_infection)) +params$birth_death_rate*N -lambda*S -params$mig_out*S -params$birth_death_rate*S -revax_out$mass_S_rate -revax_out$birth - revax_out$migrant)
   
   ## latent
   dE  <- as.numeric(- params$sigma*E + lambda*S + sum(lambda*V.states.vector*(1-params$VE)) - params$mig_out*E -params$birth_death_rate*E)
@@ -79,7 +79,7 @@ SIRV.generic <- function(t,
   dCI  <- as.numeric(params$sigma*E) #lambda*S #CI in unvaccinated class
   
   ## Number of vaccine courses
-  dVax <- sum(revax_out$routine_S_rate, revax_out$routine_V_rate, revax_out$birth, revax_out$migrant)
+  dVax <- sum(revax_out$mass_S_rate, revax_out$mass_V_rate, revax_out$birth, revax_out$migrant)
   
   out  <- c(dS = dS,
             dV.states,

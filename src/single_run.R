@@ -16,7 +16,7 @@ times <- seq(0,365*10)
 
 # Calculate elements of VE
 max_V_months = 48
-V_comps_per_month = 1 # choose from 0.5, 1, 1.5, etc.
+V_comps_per_month = 0.5 # choose from 0.5, 1, 1.5, etc.
 
 n.comps.V = max_V_months*V_comps_per_month
 VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Shanchol",bound = TRUE,max_V_months = max_V_months)
@@ -37,12 +37,12 @@ params <- list(beta=0.6538415,                # Daily transmission parameter. Fr
                n.comps.V=n.comps.V,           # Number of V compartments
                VE=VE,                         # Vaccine efficacy over time
                V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
-               vac_routine_freq = 365*2,      # Days between routine re-vaccination campaigns
-               vac_routine_frac = 1,          # Fraction of the population revaccinated during routine revaccination campaigns
+               vac_mass_freq = 365*1,         # Days between mass re-vaccination campaigns
+               vac_mass_frac = 0.8,           # Fraction of the population revaccinated during mass revaccination campaigns
                vac_birth_frac = 0,            # Fraction of babies vaccinated
                vac_mig_frac = 0.5,            # Fraction of immigrants vaccinated upon arrival
                vac_max = 5e5,                 # Maximum number of vaccines to be given
-               vac_recip = c("S", "migrant")  # Recipients of vaccination ("all", "S", "migrant", "birth")
+               vac_recip = c("all", "S", "migrant", "birth")  # Recipients of vaccination ("all", "S", "migrant", "birth")
 )
 inits = rep(0, 7+params$n.comps.V)
 inits[1] = 100000 # initially susceptible
