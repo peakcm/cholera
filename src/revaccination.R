@@ -37,8 +37,8 @@ revaccination <- function(t, N, S, V.states.vector, Vax, vac_routine_freq, vac_r
     # Give final priority to routine vaccination of those vaccinated the longest time ago
     if (vax_rem > 0 && "all" %in% vac_recip){
       if (t >= 1 && vac_routine_freq*vac_routine_frac > 0 && (round(t) %% vac_routine_freq) == 0){ # If today is the day of a routine revaccination
-        V.states.vector_reverse_cumsum <- rev(cumsum(rev(V.states.vector))) # cumsum from the back of the vector
-        routine_V <- as.numeric(V.states.vector* (V.states.vector_reverse_cumsum <= vax_rem)) # Results in a little bit of vaccine wastage
+        V.states.vector_reverse_cumsum <- rev(cumsum(rev(V.states.vector*vac_routine_frac))) # cumsum from the back of the vector
+        routine_V <- as.numeric(V.states.vector*vac_routine_frac* (V.states.vector_reverse_cumsum < as.numeric(vax_rem))) # Results in a little bit of vaccine wastage
       }
     }
   }
