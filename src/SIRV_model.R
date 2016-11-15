@@ -45,14 +45,14 @@ SIRV.generic <- function(t,
   
   for (y in seq_len(params$n.comps.V)){
     if (y==1){
-      dV.states[1] <- -params$V_step*V.states.vector[1] -lambda*V.states.vector[1]*(1-params$VE[1]) -params$mig_out*V.states.vector[1] -params$birth_death_rate*V.states.vector[1] -revax_out$routine_V[1] +sum(revax_out$routine_S, revax_out$routine_V, revax_out$birth, revax_out$migrant)
+      dV.states[1] <- -params$V_step*V.states.vector[1] -lambda*V.states.vector[1]*(1-params$VE[1]) -params$mig_out*V.states.vector[1] -params$birth_death_rate*V.states.vector[1] -revax_out$routine_V_rate[1] +sum(revax_out$routine_S_rate, revax_out$routine_V_rate, revax_out$birth, revax_out$migrant)
     } else {
-      dV.states[y] <- +params$V_step*V.states.vector[y-1] -params$V_step*V.states.vector[y] -lambda*V.states.vector[y]*(1-params$VE[y])  -params$mig_out*V.states.vector[y] -params$birth_death_rate*V.states.vector[y] -revax_out$routine_V[y]
+      dV.states[y] <- +params$V_step*V.states.vector[y-1] -params$V_step*V.states.vector[y] -lambda*V.states.vector[y]*(1-params$VE[y])  -params$mig_out*V.states.vector[y] -params$birth_death_rate*V.states.vector[y] -revax_out$routine_V_rate[y]
     }
   }
   
   ## susceptibles
-  dS <- as.numeric(params$nat_wane*R + as.numeric(params$V_step*V.states.vector[params$n.comps.V]) +params$mig_in*(N*(1-params$foreign_infection)) +params$birth_death_rate*N -lambda*S -params$mig_out*S -params$birth_death_rate*S -revax_out$routine_S -revax_out$birth - revax_out$migrant)
+  dS <- as.numeric(params$nat_wane*R + as.numeric(params$V_step*V.states.vector[params$n.comps.V]) +params$mig_in*(N*(1-params$foreign_infection)) +params$birth_death_rate*N -lambda*S -params$mig_out*S -params$birth_death_rate*S -revax_out$routine_S_rate -revax_out$birth - revax_out$migrant)
   
   ## latent
   dE  <- as.numeric(- params$sigma*E + lambda*S + sum(lambda*V.states.vector*(1-params$VE)) - params$mig_out*E -params$birth_death_rate*E)
@@ -70,7 +70,7 @@ SIRV.generic <- function(t,
   dCI  <- as.numeric(params$sigma*E) #lambda*S #CI in unvaccinated class
   
   ## Number of vaccine courses
-  dVax <- sum(revax_out$routine_S, revax_out$routine_V, revax_out$birth, revax_out$migrant)
+  dVax <- sum(revax_out$routine_S_rate, revax_out$routine_V_rate, revax_out$birth, revax_out$migrant)
   
   out  <- c(dS = dS,
             dV.states,
