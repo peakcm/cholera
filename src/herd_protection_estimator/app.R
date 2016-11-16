@@ -92,16 +92,16 @@ ui <- fluidPage(
     column(3, offset = 1,
          checkboxGroupInput("vac_recip",
                             "Ongoing Vaccine Recipients:", 
-                            choices = c("Births" = "birth", "Migrants" = "migrant", "Routine for Susceptibles" = "S", "Routine for All" = "all"),
-                            selected = c("all")),
-         sliderInput("vac_routine_freq",
-                 "Frequency of Routine Revaccination (years):",
+                            choices = c("Births" = "birth", "Migrants" = "migrant", "Mass for Susceptibles" = "mass_S", "Mass for All" = "mass_all"),
+                            selected = c()),
+         sliderInput("vac_mass_freq",
+                 "Frequency of Mass Revaccination (years):",
                  min = 0,
                  max = 10,
                  value = 0,
                  step = 1),
-       sliderInput("vac_routine_frac",
-                   "Fraction Vaccinated (Routinely):",
+       sliderInput("vac_mass_frac",
+                   "Fraction Vaccinated during Mass Campaigns:",
                    min = 0,
                    max = 1,
                    value = 1,
@@ -156,9 +156,10 @@ server <- function(input, output) {
                      n.comps.V=n.comps.V,           # Number of V compartments
                      VE=VE,                         # Vaccine efficacy over time
                      V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
+                     vac_routine_frac = 0,          # Fraction of the current S pop that is vaccinated on each day
                      
-                     vac_routine_freq = round(input$vac_routine_freq*365),                  # Days between re-vaccination campaigns
-                     vac_routine_frac = input$vac_routine_frac,
+                     vac_mass_freq = round(input$vac_mass_freq*365),                  # Days between re-vaccination campaigns
+                     vac_mass_frac = input$vac_mass_frac,
                      vac_birth_frac = input$vac_birth_frac,            # Fraction of babies vaccinated
                      vac_mig_frac = input$vac_mig_frac,            # Fraction of immigrants vaccinated upon arrival
                      vac_max = input$vac_max,                 # Maximum number of vaccines to be given
@@ -193,8 +194,10 @@ server <- function(input, output) {
                      VE=VE,                         # Vaccine efficacy over time
                      V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
                      
-                     vac_routine_freq = 0,                  # Days between re-vaccination campaigns
-                     vac_routine_frac = 0,
+                     vac_routine_frac = 0,          # Fraction of the current S pop that is vaccinated on each day
+                     
+                     vac_mass_freq = 0,                  # Days between re-vaccination campaigns
+                     vac_mass_frac = 0,
                      vac_birth_frac = 0,            # Fraction of babies vaccinated
                      vac_mig_frac = 0,            # Fraction of immigrants vaccinated upon arrival
                      vac_max = 0,                 # Maximum number of vaccines to be given
