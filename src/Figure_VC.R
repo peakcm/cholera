@@ -143,15 +143,22 @@ rm(output)
 fig_VC_df_melt <- fig_VC_df_melt[fig_VC_df_melt$DHI == 1,]
 
 #### Heatmap of DHI ####
+ggplot(fig_VC_df_melt[fig_VC_df_melt$R0_condition_name > 1 & fig_VC_df_melt$VE_condition_name == "Whole Cell\n(eg Shanchol)",], aes(x=VC_condition_name, y =R0_condition_name, fill = times/365)) + geom_tile()  + theme_bw() + ylab("Basic Reproductive Number") + xlab("Vaccine Coverage") + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6)) + scale_fill_gradientn(name="Duration of\nHerd Immunity\n(Years)", colours = rainbow(4))
+
+# scale_fill_gradient2(name="Duration of\nHerd Immunity\n(Years)", low = "#80cdc1", mid = "white", midpoint = 2, high = "#a6611a") 
+
+ggsave(file = "figures/Figure_VC.pdf", width = 3, height = 2, units = "in")
+
+#### Heatmap of DHI for supplement ####
 ggplot(fig_VC_df_melt[fig_VC_df_melt$R0_condition_name > 1,], aes(x=VC_condition_name, y =R0_condition_name, fill = times/365)) + geom_tile()  + theme_bw() + ylab("Basic Reproductive Number") + xlab("Vaccine Coverage") + facet_grid(VE_condition_name~.) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6)) + scale_fill_gradientn(name="Duration of\nHerd Immunity\n(Years)", colours = rainbow(4))
 
 # scale_fill_gradient2(name="Duration of\nHerd Immunity\n(Years)", low = "#80cdc1", mid = "white", midpoint = 2, high = "#a6611a") 
 
-ggsave(file = "figures/Figure_VC.pdf", width = 4, height = 4, units = "in")
-
-#### Bar chart of DHI ####
-# A work in progress
-ggplot(fig_VC_df_melt[fig_VC_df_melt$DHI == 1,], aes(x = VE_condition_name, y = times/365, fill = R0_condition_name, color = mig_condition_name))  + geom_bar(position = "dodge", stat = "identity", width = .8) + ylab("Duration of Herd Immunity (Years)") + coord_flip() + scale_x_discrete(limits = rev(levels(fig_VC_df_melt$VE_condition_name)))
+ggsave(file = "figures/Figure_VC_supplement.pdf", width = 4, height = 4, units = "in")
+# 
+# #### Bar chart of DHI ####
+# # A work in progress
+# ggplot(fig_VC_df_melt[fig_VC_df_melt$DHI == 1,], aes(x = VE_condition_name, y = times/365, fill = R0_condition_name, color = mig_condition_name))  + geom_bar(position = "dodge", stat = "identity", width = .8) + ylab("Duration of Herd Immunity (Years)") + coord_flip() + scale_x_discrete(limits = rev(levels(fig_VC_df_melt$VE_condition_name)))
 
 #### Save workspace ####
 save.image(file = "src/Figure_VC.RData")
