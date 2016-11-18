@@ -67,11 +67,12 @@ for (row in seq_len(sims)){
                  n.comps.V=n.comps.V,           # Number of V compartments
                  VE=fig_BB_df$VE_condition[row][[1]],                         # Vaccine efficacy over time
                  V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
-                 vac_routine_freq = 0,          # Days between routine re-vaccination campaigns
-                 vac_routine_frac = 0,          # Fraction of the population revaccinated during routine revaccination campaigns
+                 vac_routine_frac = 0.00,          # Fraction of the current S pop that is vaccinated on each day
+                 vac_mass_freq = 0,         # Days between mass re-vaccination campaigns
+                 vac_mass_frac = 0,           # Fraction of the population revaccinated during mass revaccination campaigns
                  vac_birth_frac = 0,            # Fraction of babies vaccinated
-                 vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
-                 vac_max = 5e50,                # Maximum number of vaccines to be given
+                 vac_mig_frac = 0,            # Fraction of immigrants vaccinated upon arrival
+                 vac_max = 5e50,                 # Maximum number of vaccines to be given
                  vac_recip = c("all")  # Recipients of vaccination ("all", "S", "migrant", "birth")
   )
   inits = rep(0, 7+params$n.comps.V)
@@ -138,7 +139,7 @@ ggplot(fig_BB_df_melt, aes(x = times/365, y = Re, linetype = mig_condition_name,
 # Add an indicator on each curve marking the loss of Herd Immunity
 # Alternatively, since the y=0.246 line is Re = 1, just draw a line
 # Can add Re as a secondary axis with the probabilty of an outbreak
-ggplot(fig_BB_df_melt[fig_BB_df_melt$VE_condition_name %in% c("Whole Cell\n(eg Shanchol)", "Perfect Vaccine"),], aes(x = times/365, y = prob_outbreak_10, linetype = mig_condition_name, color = R0_condition_name)) + geom_hline(yintercept = 0.246, col = "grey") + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years since Vaccination") + ylab("Probability of an Outbreak\n(at least 10 cases)") + theme_bw() + scale_color_discrete(name = "Basic Reproductive\nNumber") + scale_linetype_discrete(name = "In/Out Migration Rate") + ylim(0,1) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
+ggplot(fig_BB_df_melt[fig_BB_df_melt$VE_condition_name %in% c("Whole Cell\n(eg Shanchol)", "Perfect Vaccine"),], aes(x = times/365, y = prob_outbreak_10, linetype = mig_condition_name, color = R0_condition_name)) + geom_hline(yintercept = 0.246, col = "grey") + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years since Vaccination") + ylab("Probability of an Outbreak\n(at least 10 cases)") + theme_bw() + scale_color_discrete(name = "Basic Reproductive\nNumber") + scale_linetype_manual(name = "In/Out Migration Rate", values = c("solid", "dashed")) + ylim(0,1) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
 
 ggsave(file = "figures/Figure_BB.pdf", width = 5, height = 3, units = "in")
 
@@ -146,7 +147,7 @@ ggsave(file = "figures/Figure_BB.pdf", width = 5, height = 3, units = "in")
 # Add an indicator on each curve marking the loss of Herd Immunity
 # Alternatively, since the y=0.246 line is Re = 1, just draw a line
 # Can add Re as a secondary axis with the probabilty of an outbreak
-ggplot(fig_BB_df_melt, aes(x = times/365, y = prob_outbreak_10, linetype = mig_condition_name, color = R0_condition_name)) + geom_hline(yintercept = 0.246, col = "grey") + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years since Vaccination") + ylab("Probability of an Outbreak\n(at least 10 cases)") + theme_bw() + scale_color_discrete(name = "Basic Reproductive\nNumber") + scale_linetype_discrete(name = "In/Out Migration Rate") + ylim(0,1) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
+ggplot(fig_BB_df_melt, aes(x = times/365, y = prob_outbreak_10, linetype = mig_condition_name, color = R0_condition_name)) + geom_hline(yintercept = 0.246, col = "grey") + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years since Vaccination") + ylab("Probability of an Outbreak\n(at least 10 cases)") + theme_bw() + scale_color_discrete(name = "Basic Reproductive\nNumber") + scale_linetype_manual(name = "In/Out Migration Rate", values = c("solid", "dashed")) + ylim(0,1) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
 
 ggsave(file = "figures/Figure_BB_supplement.pdf", width = 5, height = 3, units = "in")
 # ggsave(file = "figures/Figure_BB_seasonal.pdf", width = 5, height = 3, units = "in")
