@@ -37,8 +37,26 @@ for (i in 1:nrow(df_diff)){
   df_diff[i, "diff"] <- df[df$vaccine_choice == "None" & df$mig_rate == df_diff[i,"mig_rate"], "prob_outbreak"] - df[df$vaccine_choice == "Shanchol" & df$mig_rate == df_diff[i,"mig_rate"], "prob_outbreak"]
 }
 
+#### Create data frame for migration rate call-outs ####
+# Calculate the migration rate to satisfy the turnover in Bentiu. Between Feb 2016 and Oct 2016, an average of 2,000 entries and exits occured while the population remained static at around 104,000 people
+N_bentiu <- 104000
+(Bentiu_rate <- 1/(365*(log((N_bentiu-2000)/N_bentiu, base = exp(1))/30.5*-1)))
+
+call_outs <- data.frame(labels = c("Dhaka", "Calcutta", "Bentiu"),
+                        x = c(1/2, 1/20, 1/Bentiu_rate),
+                        y = c(1.1, 1.1, 1.1))
+
 #### Plot ####
-ggplot() + geom_bar(data = df_diff, aes(x = mig_rate, y = diff, fill = "Difference"), stat = "identity") + geom_line(data = df, aes(x = mig_rate, y = prob_outbreak, color = vaccine_choice)) + theme_bw() + ylab("5-year Probability of an Outbreak") + scale_color_discrete(name = "Vaccine Status") + scale_x_continuous(breaks = c(0.05, 0.20, 0.333, 0.5, 1/1.5, 1), labels = c("1/20", "1/5", "1/3", "1/2", "1/1.5", "1/1"), name = "Migration Rate (per year)") + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6)) + theme(legend.position = c(.8, .5)) + scale_fill_manual(name = element_blank(), values = "grey") + guides(color = guide_legend(order = 1))
+ggplot() + 
+  # call-outs
+  geom_vline(data = call_outs, aes(xintercept = x), col = "grey", lty = "dashed") + geom_text(data = call_outs, aes(x = x, y = y, label = labels), color = "grey", angle = 90, nudge_x = -0.05) +
+  # bars
+  geom_bar(data = df_diff, aes(x = mig_rate, y = diff, fill = "Difference"), stat = "identity") +
+  # lines
+  geom_line(data = df, aes(x = mig_rate, y = prob_outbreak, color = vaccine_choice)) + 
+  # Formatting
+  theme_bw() + ylab("5-Year Probability of an Outbreak\nFollowing Mass Vaccination") + scale_color_discrete(name = "Vaccine Status") +
+  scale_x_continuous(breaks = c(0.05, 0.20, 0.333, 0.5, 1/1.5, 1), labels = c("1/20", "1/5", "1/3", "1/2", "1/1.5", "1/1"), name = "Migration Rate (per year)") + theme(text = element_text(size = 6), legend.text=element_text(size=4), legend.title=element_text(size=4), axis.text.x = element_text(size = 8), axis.text.y = element_text(size = 8)) + theme(legend.position = c(.8, .4)) + scale_fill_manual(name = element_blank(), values = "grey") + guides(color = guide_legend(order = 1)) + scale_y_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c("0", "0.25", "0.50", "0.75", "1"), limits = c(0,1.2)) + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
 
 # Higher R, lower optimal Migration Rate. 
 # Higher seasonal amplitude, lower optimal Migration Rate
