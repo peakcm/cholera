@@ -4,6 +4,7 @@ revaccination <- function(t, N, S, V.states.vector, Vax, vac_routine_count, vac_
   # In the ODE, the entire compartment cannot move at once, so the vaccine fraction needs to be reduced
   if(vac_mass_frac > 0.99){vac_mass_frac <- 0.99}
   
+  # cat( Vax, "\n") # Troubleshoot
   vax_rem <- vac_max - Vax
   if (vac_routine_count > vax_rem){
     vac_routine_count <- vax_rem
@@ -21,34 +22,31 @@ revaccination <- function(t, N, S, V.states.vector, Vax, vac_routine_count, vac_
 
     # Give first priority to births
     if ("birth" %in% vac_recip){
-      birth   <- as.numeric(min(vax_rem, birth_rate*N*vac_birth_frac))
+      birth   <- min(vac_routine_count, as.numeric(min(vax_rem, birth_rate*N*vac_birth_frac)))
       vax_rem <- vax_rem - birth
       vac_routine_count <- vac_routine_count - birth
     }
 
     # Give second priority to immigrants
     if (vax_rem > 0 && "migrant" %in% vac_recip){
-      migrant <- as.numeric(min(vax_rem, mig_in*N*vac_mig_frac))
+      migrant <- min(vac_routine_count,as.numeric(min(vax_rem, mig_in*N*vac_mig_frac)))
       vax_rem <- vax_rem - migrant
       vac_routine_count <- vac_routine_count - migrant
     }
     
     # Give third priority to routine vaccination of susceptible people
-    if (vax_rem > 0 && "routine_S" %in% vac_recip){
-      routine_S <- as.numeric(vac_routine_count)
+    if (vax_rem > 0 && ("routine_all" %in% vac_recip | "routine_S" %in% vac_recip) && S > 1){
+      routine_S <- min(S-1, as.numeric(vac_routine_count)) # Remove one S so that the fraction is never 1
       vax_rem <- vax_rem - routine_S
       vac_routine_count <- vac_routine_count - routine_S
     }
     
     # Give fourth priority to routine vaccination of those vaccinated the longest time ago
-    if (vax_rem > 0 && "routine_all" %in% vac_recip){
-      V.states.vector_reverse_cumsum <- rev(cumsum(rev(V.states.vector))) # cumsum from the back of the vector
-      youngest_V_to_vaccinate <- which(V.states.vector_reverse_cumsum > as.numeric(vac_routine_count))[1]
-      if (youngest_V_to_vaccinate == 1){ # If you only have enough vaccine to give to the oldest V compartment
-        routine_V <- c(vac_routine_count, rep(0, length(V.states.vector)-1))
-      } else {
-        routine_V <- c(V.states.vector[1:(youngest_V_to_vaccinate-1)], vac_routine_count, rep(0, length(V.states.vector)-youngest_V_to_vaccinate)) 
-      } 
+    if (vax_rem > 0 && "routine_all" %in% vac_recip && sum(V.states.vector)>0){
+      V.states.vector_reverse_cumsum <- as.numeric(rev(cumsum(rev(V.states.vector)))) # cumsum from the back of the vector
+      V_to_vaccinate <- V.states.vector_reverse_cumsum < as.numeric(vac_routine_count)
+      
+      routine_V <- as.numeric(V.states.vector * V_to_vaccinate) # Results in a little bit of vaccine wastage
       
       vax_rem <- vax_rem - sum(routine_V)
       vac_routine_count <- vac_routine_count - sum(routine_V)
@@ -82,15 +80,17 @@ revaccination <- function(t, N, S, V.states.vector, Vax, vac_routine_count, vac_
   }
   routine_V_frac <- as.numeric(routine_V/V.states.vector)
   routine_V_frac[which(is.nan(routine_V_frac))] <- 0
+  routine_V_frac[which(routine_V_frac > 0.99)] <- 0.99
   mass_V_frac <- as.numeric(mass_V/(V.states.vector-routine_V))
   mass_V_frac[which(is.nan(mass_V_frac))] <- 0
   
   # Convert from the desired fraction to the desired transition rate for the ode
   routine_S_rate = as.numeric(S * -log(1-routine_S_frac, base = exp(1)))
   mass_S_rate = as.numeric((S-routine_S) * -log(1-mass_S_frac, base = exp(1)))
-  routine_V_rate = as.numeric(V.states.vector * sapply(routine_V_rate, function(x) -log(1-x, base = exp(1))))
+  routine_V_rate = as.numeric(V.states.vector * sapply(routine_V_frac, function(x) -log(1-x, base = exp(1))))
   mass_V_rate = as.numeric((V.states.vector-routine_V) * sapply(mass_V_frac, function(x) -log(1-x, base = exp(1))))
   
+  # cat(routine_V_rate, "\n") # Troubleshoot
   return(list(routine_S = routine_S,
               routine_S_rate = routine_S_rate,
               routine_V = routine_V,
