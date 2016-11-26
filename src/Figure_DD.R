@@ -55,7 +55,7 @@ ggplot() +
   # lines
   geom_line(data = df, aes(x = mig_rate, y = prob_outbreak, color = vaccine_choice)) + 
   # Formatting
-  theme_bw() + ylab("5-Year Probability of an Outbreak\nFollowing Mass Vaccination") + scale_color_discrete(name = "Vaccine Status") +
+  theme_bw() + ylab("5-Year Probability of an Outbreak\nInitiated by an Imported Case") + scale_color_discrete(name = "Vaccine Status") +
   scale_x_continuous(breaks = c(0.05, 0.20, 0.333, 0.5, 1/1.5, 1), labels = c("1/20", "1/5", "1/3", "1/2", "1/1.5", "1/1"), name = "Migration Rate (per year)") + theme(text = element_text(size = 6), legend.text=element_text(size=4), legend.title=element_text(size=4), axis.text.x = element_text(size = 8), axis.text.y = element_text(size = 8)) + theme(legend.position = c(.8, .4)) + scale_fill_manual(name = element_blank(), values = "grey") + guides(color = guide_legend(order = 1)) + scale_y_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1), labels = c("0", "0.25", "0.50", "0.75", "1"), limits = c(0,1.2)) + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
 
 # Higher R, lower optimal Migration Rate. 
