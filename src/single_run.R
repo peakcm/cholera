@@ -37,17 +37,17 @@ params <- list(beta=0.6538415,                # Daily transmission parameter. Fr
                n.comps.V=n.comps.V,           # Number of V compartments
                VE=VE,                         # Vaccine efficacy over time
                V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
-               vac_routine_count = 200,          # Fraction of the current S pop that is vaccinated on each day
-               vac_mass_freq = 365*2,         # Days between mass re-vaccination campaigns
+               vac_routine_count = 90,        # Number of courses given each day
+               vac_mass_freq = 365*1,         # Days between mass re-vaccination campaigns
                vac_mass_frac = 0.8,           # Fraction of the population revaccinated during mass revaccination campaigns
                vac_birth_frac = 1,            # Fraction of babies vaccinated
-               vac_mig_frac = 1,            # Fraction of immigrants vaccinated upon arrival
-               vac_max = 2e5,                 # Maximum number of vaccines to be given
-               vac_recip = c("routine_S")  # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
+               vac_mig_frac = 1,              # Fraction of immigrants vaccinated upon arrival
+               vac_max = 3e5,                 # Maximum number of vaccines to be given
+               vac_recip = c("routine_S")     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
 )
 inits = rep(0, 7+params$n.comps.V)
-inits[1] = 100000 # initially susceptible
-inits[2] = 0000 # initially vaccinated
+inits[1] = 60000 # initially susceptible
+inits[2] = 40000 # initially vaccinated
 inits[params$n.comps.V+3] = 0 # initially infected
 inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
 
