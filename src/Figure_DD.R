@@ -22,7 +22,7 @@ call_outs <- data.frame(labels = c("Dhaka\n[Qadri et al 2015]", "Calcutta\n[Sur 
                         x = c(1/2, 1/20, 1/Bentiu_rate),
                         y = c(1.075, 1.075, 1.075))
 
-#### Practice ####
+#### Parms and Practice ####
 years = 5
 mig_rate = 1/20
 pop_size = 1000
@@ -69,13 +69,13 @@ ggplot() +
 ggsave(file = "figures/Figure_DD_single.pdf", width = 3, height = 3, units = "in")
 
 #### Multiple Loops through migration rates ####
-horizons <- c(2, 3, 4, 5, 6)
+horizons <- c(1, 2, 3, 4, 5, 6)
 
 df <- NA
 df_diff <- NA
 for (years in horizons){
   vaccine_choices = c("None", "Shanchol")
-  mig_rate_choices = seq(0, 1/1, length.out = 40)
+  mig_rate_choices = seq(0, 1/1, length.out = 20)
   
   df_temp <- data.frame(vaccine_choice = rep(vaccine_choices, each = length(mig_rate_choices)), mig_rate = rep(mig_rate_choices, length(vaccine_choices)), prob_outbreak = NA)
   
@@ -116,10 +116,13 @@ ggplot() +
   geom_line(data = df_diff, aes(x = mig_rate, y = diff, group = years, color = years)) +
   # Formatting
   theme_bw() + ylab("Vaccine Impact\n(decrease in outbreak probability)") + 
-  scale_color_brewer(type = "seq", palette = 8, name = "Time Horizon\n(years)") +
+  scale_color_brewer(type = "seq", palette = 8, name = "Time Horizon since\nVaccination (years)") +
   scale_x_continuous(breaks = c(0.05, 0.20, 0.333, 0.5, 1/1.5, 1), labels = c("1/20", "1/5", "1/3", "1/2", "1/1.5", "1/1"), name = "Migration Rate (per year)") + theme(text = element_text(size = 6), legend.text=element_text(size=4), legend.title=element_text(size=4), axis.text.x = element_text(size = 8), axis.text.y = element_text(size = 8)) + scale_y_continuous(breaks = c(0, 0.25, 0.5), labels = c("0", "0.25", "0.50"), limits = c(0,0.6)) + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
 
-ggsave(file = "figures/Figure_DD.pdf", width = 4, height = 2, units = "in")
+# ggsave(file = "figures/Figure_DD.pdf", width = 4, height = 2, units = "in") 
+
+ggplot(df_diff_optimal, aes(x = as.numeric(as.character(years)), y = 1/optimal_mig_rate, color = years)) + geom_point(pch = 17) + theme(panel.grid.minor = element_blank()) + theme_bw() +   scale_color_brewer(type = "seq", palette = 8, name = "Time Horizon\n(years)") + ylab("1/Optimal Migration Rate") + xlab("Time Horizon since\nVaccination (years)") 
+
 
 #### Save workspace ####
 save.image(file = "src/Figure_DD.RData")
