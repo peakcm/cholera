@@ -35,7 +35,7 @@ cum_prob_outbreak <- function(years, mig_rate, pop_size, time_step, avg_prob, se
   if (vaccine_choice == "None"){
     Xt <- rep(1, 365*years)
   } else {
-    VE_t <- Create_VE(timesteps_per_month = 30, VE_shape = vaccine_choice, bound=TRUE, 12*years)
+    VE_t <- Create_VE(timesteps_per_month = 30, VE_shape = vaccine_choice, bound=TRUE, max_V_months = 12*years)
     
     Xt <- c(1 - (VE_t*exp(-1*(mig_rate/365)*(1:(length(VE_t))))), rep(1, times = (365*years - length(VE_t))))
   }
