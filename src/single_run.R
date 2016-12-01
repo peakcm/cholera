@@ -12,7 +12,7 @@ source("src/revaccination.R")
 require(ggplot2)
 
 #### Example input parms #####
-times <- seq(0,365*10)
+times <- seq(0,365*5)
 
 # Calculate elements of VE
 max_V_months = 48
@@ -31,32 +31,34 @@ params <- list(beta=0.6538415,                # Daily transmission parameter. Fr
                sigma=1/1.4,                   # Incubation period
                birth_death_rate=1/(365*40),   # Average birth and death rate
                nat_wane=0*1/(365*10),         # Rate of natural immunity waning
-               mig_in= 1/(365*2),             # Rate of immigration
-               mig_out=1/(365*2),             # Rate of emigration
+               mig_in= 1/(365*3.6),             # Rate of immigration
+               mig_out=1/(365*4.6),             # Rate of emigration
                foreign_infection=0.00,        # Proportion of immigrants who are infected
                n.comps.V=n.comps.V,           # Number of V compartments
                VE=VE,                         # Vaccine efficacy over time
                V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
-               vac_routine_count = 90,        # Number of courses given each day
-               vac_mass_freq = 365*1,         # Days between mass re-vaccination campaigns
-               vac_mass_frac = 0.8,           # Fraction of the population revaccinated during mass revaccination campaigns
-               vac_birth_frac = 1,            # Fraction of babies vaccinated
-               vac_mig_frac = 1,              # Fraction of immigrants vaccinated upon arrival
-               vac_max = 3e5,                 # Maximum number of vaccines to be given
-               vac_recip = c("routine_S")     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
+               vac_routine_count = 0,        # Number of courses given each day
+               vac_mass_freq = 365*0,         # Days between mass re-vaccination campaigns
+               vac_mass_frac = 0,           # Fraction of the population revaccinated during mass revaccination campaigns
+               vac_birth_frac = 0,            # Fraction of babies vaccinated
+               vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
+               vac_max = 0,                 # Maximum number of vaccines to be given
+               vac_recip = c("mass_S")     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
 )
 inits = rep(0, 7+params$n.comps.V)
-inits[1] = 60000 # initially susceptible
-inits[2] = 40000 # initially vaccinated
+inits[1] = 3057 # initially susceptible
+inits[2] = 73360 # initially vaccinated
 inits[params$n.comps.V+3] = 0 # initially infected
 inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
 
 #### Test function ####
 test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
+test.run$N <- apply(test.run[,c("S","E","I","R","V_total")], 1, sum)
 
 # Check to make sure number in pop is stationary
-summary(apply(test.run[,c("S","E","I","R","V_total")], 1, sum))
+summary(test.run$N)
 # plot(apply(test.run[,c("S","E","I","R","V_total")], 1, sum), type = "l")
+ggplot(test.run, aes(x = time/365, y = N)) + geom_line() + theme_bw() + xlab("Years") + ylab("N")
 
 #### Plot results ####
 ggplot(test.run, aes(x = time/365, y = Re)) + geom_line() + geom_hline(yintercept=1, col="red") + 
