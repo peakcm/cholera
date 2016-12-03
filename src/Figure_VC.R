@@ -1,9 +1,4 @@
-
 #### Figure VC on impact of vaccine coverage ####
-# Under construction
-# Heatmap
-# X axis is the vaccine coverage (0 to 100%)
-# Y axis is the R_0 (1 to 3)
 
 setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
 
@@ -17,6 +12,7 @@ source("src/Seasonality.R")
 source("src/prob_outbreak_fcn.R")
 source("src/SIRV_model.R")
 source("src/Run_SIRV_model.R")
+source("src/revaccination.R")
 require(ggplot2)
 require(data.table)
 require(RColorBrewer)
@@ -30,12 +26,15 @@ V_comps_per_month = 1
 n.comps.V = max_V_months*V_comps_per_month
 
 #### Changing Conditions ####
+# VE_conditions <- list(
+#   "Shanchol" = Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Shanchol",bound = TRUE,max_V_months = max_V_months),
+#   "Dukoral" = Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Dukoral",bound = TRUE, max_V_months = max_V_months)
+# )
 VE_conditions <- list(
-  "Shanchol" = Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Shanchol",bound = TRUE,max_V_months = max_V_months),
-  "Dukoral" = Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Dukoral",bound = TRUE, max_V_months = max_V_months)
-)
+  "Shanchol" = Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Shanchol",bound = TRUE,max_V_months = max_V_months)
+  )
 
-R0_conditions <- seq(1, 2.5, 0.05)
+R0_conditions <- seq(1, 3, 0.05)
 VC_conditions <- seq(0.05, 1, 0.05)
 
 sims <- length(VE_conditions) * length(R0_conditions) * length(VC_conditions)
@@ -51,43 +50,51 @@ fig_VC_df$VE_condition <- rep(VE_conditions, each = sims/length(VE_conditions))
 fig_VC_df$R0_condition <- rep(R0_conditions, times = sims/length(R0_conditions))
 fig_VC_df$VC_condition <- rep(rep(VC_conditions, each = length(R0_conditions)), times = sims / (length(R0_conditions)*length(VC_conditions))) 
 
+#### Drop simulations I know won't have DHI ####
+fig_VC_df$skip = 0
+fig_VC_df[fig_VC_df$R0_condition > 1.6 & fig_VC_df$VC_condition < 0.5, "skip"] <- 1
+fig_VC_df[fig_VC_df$R0_condition > 2 & fig_VC_df$VC_condition < 0.75, "skip"] <- 1
+
 #### Loop through conditions ####
-for (row in seq_len(sims)){
-  
-  # Create params
-  params <- list(beta=fig_VC_df$R0_condition[row]/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
-                 beta_shape = "constant",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
-                 beta_amp = 0.05,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
-                 beta_phase_shift = 0,          # Phase shift in a sinusoidal seasonal forcing function
-                 gamma=1/2,                     # Duration of disease
-                 sigma=1/1.4,                   # Incubation period
-                 birth_death_rate=0*1/(365*40), # Average birth and death rate
-                 nat_wane=0*1/(365*10),         # Rate of natural immunity waning
-                 mig_in= 0,             # Rate of immigration
-                 mig_out=0,             # Rate of emigration
-                 foreign_infection=0.00,        # Proportion of immigrants who are infected
-                 n.comps.V=n.comps.V,           # Number of V compartments
-                 VE=fig_VC_df$VE_condition[row][[1]],                         # Vaccine efficacy over time
-                 V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
-                 vac_routine_freq = 0,          # Days between routine re-vaccination campaigns
-                 vac_routine_frac = 0,          # Fraction of the population revaccinated during routine revaccination campaigns
-                 vac_birth_frac = 0,            # Fraction of babies vaccinated
-                 vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
-                 vac_max = 5e50,                # Maximum number of vaccines to be given
-                 vac_recip = c("all")  # Recipients of vaccination ("all", "S", "migrant", "birth")
-  )
-  inits = rep(0, 7+params$n.comps.V)
-  inits[1] = 100000*(1-fig_VC_df$VC_condition[row]) # initially susceptible
-  inits[2] = 100000*(fig_VC_df$VC_condition[row]) # initially vaccinated
-  inits[params$n.comps.V+3] = 0 # initially infected
-  inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
-  
-  # Run model
-  output <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
-  
-  fig_VC_df$Re[row] <- list(output$Re)
-  fig_VC_df$prob_outbreak_10[row] <- list(output$prob_outbreak_10)
-  
+for (row in 1:nrow(fig_VC_df)){
+  if (fig_VC_df[row, "skip"] != 1){
+    # Create params
+    params <- list(beta=fig_VC_df$R0_condition[row]/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
+                   beta_shape = "constant",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
+                   beta_amp = 0.05,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
+                   beta_phase_shift = 0,          # Phase shift in a sinusoidal seasonal forcing function
+                   gamma=1/2,                     # Duration of disease
+                   sigma=1/1.4,                   # Incubation period
+                   birth_death_rate=0, # Average birth and death rate
+                   nat_wane=0,         # Rate of natural immunity waning
+                   mig_rates_constant = TRUE,      # TRUE if migration rates are constant
+                   mig_in= 0,             # Rate of immigration
+                   mig_out=0,             # Rate of emigration
+                   foreign_infection=0.00,        # Proportion of immigrants who are infected
+                   n.comps.V=n.comps.V,           # Number of V compartments
+                   VE=fig_VC_df$VE_condition[row][[1]],                         # Vaccine efficacy over time
+                   V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
+                   vac_routine_count = 0,          # Fraction of the current S pop that is vaccinated on each day
+                   vac_mass_freq = 0,          # Days between routine re-vaccination campaigns
+                   vac_mass_frac = 0,          # Fraction of the population revaccinated during routine revaccination campaigns
+                   vac_birth_frac = 0,            # Fraction of babies vaccinated
+                   vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
+                   vac_max = 5e50,                # Maximum number of vaccines to be given
+                   vac_recip = c("routine_S")  # Recipients of vaccination ("all", "S", "migrant", "birth")
+    )
+    inits = rep(0, 7+params$n.comps.V)
+    inits[1] = 1000*(1-fig_VC_df$VC_condition[row]) # initially susceptible
+    inits[2] = 1000*(fig_VC_df$VC_condition[row]) # initially vaccinated
+    inits[params$n.comps.V+3] = 0 # initially infected
+    inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
+    
+    # Run model
+    output <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
+    
+    fig_VC_df$Re[row] <- list(output$Re)
+    fig_VC_df$prob_outbreak_10[row] <- list(output$prob_outbreak_10)
+
+  }
   cat(".")
 }
 
