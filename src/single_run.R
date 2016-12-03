@@ -6,6 +6,7 @@ source("src/calculate_Re.R")
 source("src/calculate_VE.R")
 source("src/Seasonality.R")
 source("src/prob_outbreak_fcn.R")
+source("src/migration_rate_calculator")
 source("src/SIRV_model.R")
 source("src/Run_SIRV_model.R")
 source("src/revaccination.R")
@@ -31,8 +32,9 @@ params <- list(beta=0.6538415,                # Daily transmission parameter. Fr
                sigma=1/1.4,                   # Incubation period
                birth_death_rate=1/(365*40),   # Average birth and death rate
                nat_wane=0*1/(365*10),         # Rate of natural immunity waning
+               mig_rates_constant = TRUE,      # TRUE if migration rates are constant
                mig_in= 1/(365*3.6),             # Rate of immigration
-               mig_out=1/(365*4.6),             # Rate of emigration
+               mig_out= 1/(365*4.6),             # Rate of emigration
                foreign_infection=0.00,        # Proportion of immigrants who are infected
                n.comps.V=n.comps.V,           # Number of V compartments
                VE=VE,                         # Vaccine efficacy over time
