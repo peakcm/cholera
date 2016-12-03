@@ -6,20 +6,38 @@
 #
 #    http://shiny.rstudio.com/
 #
+require(deSolve)
+require(ggplot2)
+require(shiny)
 
-setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
+source_https <- function(url, ...) {
+  # load package
+  require(RCurl)
+  
+  # parse and evaluate each .R script
+  sapply(c(url, ...), function(u) {
+    eval(parse(text = getURL(u, followlocation = TRUE, cainfo = system.file("CurlSSL", "cacert.pem", package = "RCurl"))), envir = .GlobalEnv)
+  })
+}
+
 
 #### Load libraries and functions ####
-source("src/calculate_Re.R")
-source("src/calculate_VE.R")
-source("src/Seasonality.R")
-source("src/prob_outbreak_fcn.R")
-source("src/SIRV_model.R")
-source("src/Run_SIRV_model.R")
-source("src/revaccination.R")
-require(ggplot2)
+source_https("https://raw.githubusercontent.com/peakcm/cholera/master/src/calculate_VE.R",
+             "https://raw.githubusercontent.com/peakcm/cholera/master/src/calculate_Re.R",
+             "https://raw.githubusercontent.com/peakcm/cholera/master/src/Seasonality.R",
+             "https://raw.githubusercontent.com/peakcm/cholera/master/src/prob_outbreak_fcn.R",
+             "https://raw.githubusercontent.com/peakcm/cholera/master/src/SIRV_model.R",
+             "https://raw.githubusercontent.com/peakcm/cholera/master/src/Run_SIRV_model.R",
+             "https://raw.githubusercontent.com/peakcm/cholera/master/src/revaccination.R")
 
-require(shiny)
+# setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
+# source("src/calculate_Re.R")
+# source("src/calculate_VE.R")
+# source("src/Seasonality.R")
+# source("src/prob_outbreak_fcn.R")
+# source("src/SIRV_model.R")
+# source("src/Run_SIRV_model.R")
+# source("src/revaccination.R")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -53,8 +71,8 @@ ui <- fluidPage(
                    step = 0.05),
        radioButtons("VE_shape", 
                     "Vaccine:",
-                    choices = c("Dukoral", "Shanchol"),
-                    selected = "Dukoral"),
+                    choices = c("Shanchol", "Dukoral", "Perfect"),
+                    selected = "Shanchol"),
       radioButtons("outcome_of_interest",
                    "Outcome of Interest:",
                    choices=c("Effective Reproductive Number" = "Re", "Probability of Outbreak" = "prob"),
@@ -152,6 +170,7 @@ server <- function(input, output) {
                      sigma=1/1.4,                   # Incubation period
                      birth_death_rate=1/(input$birth*365), # Average birth and death rate
                      nat_wane=1/(365*10),         # Rate of natural immunity waning
+                     mig_rates_constant = TRUE,      # TRUE if migration rates are constant
                      mig_in= 1/(input$mig*365),             # Rate of immigration
                      mig_out=1/(input$mig*365),             # Rate of emigration
                      foreign_infection=0.00,        # Proportion of immigrants who are infected
@@ -189,6 +208,7 @@ server <- function(input, output) {
                      sigma=1/1.4,                   # Incubation period
                      birth_death_rate=1/(input$birth*365), # Average birth and death rate
                      nat_wane=1/(365*10),         # Rate of natural immunity waning
+                     mig_rates_constant = TRUE,      # TRUE if migration rates are constant
                      mig_in= 1/(input$mig*365),             # Rate of immigration
                      mig_out=1/(input$mig*365),             # Rate of emigration
                      foreign_infection=0.00,        # Proportion of immigrants who are infected
@@ -219,12 +239,12 @@ server <- function(input, output) {
     output$R_t <- renderPlot({
       if (input$outcome_of_interest %in% "Re"){
         ggplot(model(), aes(x = time/365, y = Re)) + geom_line()  + 
-          theme_bw() + xlab("Years since Initial Vaccination") + ylab("R Effective") + scale_x_continuous(breaks = seq(0, 5, 1)) +
+          theme_bw() + xlab("Years since Initial Vaccination") + ylab("Effective Reproductive Number") + scale_x_continuous(breaks = seq(0, 5, 1)) +
           ylim(0,max(3, input$R_0)) + geom_hline(yintercept=1, col="red") +
           geom_line(data = model_no_vax(), aes(x = time/365, y = Re), col = "grey", lty = "dashed")
       } else if (input$outcome_of_interest %in% "prob"){
         ggplot(model(), aes(x = time/365, y = prob_outbreak_fcn(Re, input$outbreak_size))) + geom_line()  + 
-          theme_bw() + xlab("Years since Initial Vaccination") + ylab(paste("Probability of >", input$outbreak_size, "cases")) + scale_x_continuous(breaks = seq(0, 5, 1)) + ylim(0,1) +
+          theme_bw() + xlab("Years Since Initial Vaccination") + ylab(paste("Probability of >", input$outbreak_size, "cases")) + scale_x_continuous(breaks = seq(0, 5, 1)) + ylim(0,1) +
           geom_line(data = model_no_vax(), aes(x = time/365, y = prob_outbreak_fcn(Re, input$outbreak_size)), col = "grey", lty = "dashed")
       }
      })

@@ -1,0 +1,10 @@
+name: herd_protection_estimator
+title: Herd Protection Estimator
+account: coreypeak
+server: shinyapps.io
+appId: 141939
+bundleId: 634679
+url: https://coreypeak.shinyapps.io/herd_protection_estimator/
+when: 1480780320.25118
+asMultiple: FALSE
+asStatic: FALSE
