@@ -34,11 +34,14 @@ outbreak_size = 10 # min cases for outbreak definition
 vaccine_choice = "None"
 # vaccine_choice = "Shanchol"
 # vaccine_choice = "Dukoral"
+# vaccine_choice = "Perfect
 
 cum_prob_outbreak(years = years, mig_rate = mig_rate, pop_size = pop_size, time_step = time_step, avg_prob = avg_prob, seasonal_amp = seasonal_amp, R = R, outbreak_size = outbreak_size, vaccine_choice = vaccine_choice)
 
 #### Single Loop through migration rates ####
 vaccine_choices = c("None", "Shanchol")
+# vaccine_choices = c("None", "Perfect")
+
 mig_rate_choices = seq(0, 1/1, length.out = 40)
 
 df_single <- data.frame(vaccine_choice = rep(vaccine_choices, each = length(mig_rate_choices)), mig_rate = rep(mig_rate_choices, length(vaccine_choices)), prob_outbreak = NA)
@@ -51,6 +54,8 @@ for (i in 1:nrow(df_single)){
 df_single_diff <- data.frame(mig_rate = mig_rate_choices, diff = NA)
 for (i in 1:nrow(df_single_diff)){
   df_single_diff[i, "diff"] <- df_single[df_single$vaccine_choice == "None" & df_single$mig_rate == df_single_diff[i,"mig_rate"], "prob_outbreak"] - df_single[df_single$vaccine_choice == "Shanchol" & df_single$mig_rate == df_single_diff[i,"mig_rate"], "prob_outbreak"]
+  # df_single_diff[i, "diff"] <- df_single[df_single$vaccine_choice == "None" & df_single$mig_rate == df_single_diff[i,"mig_rate"], "prob_outbreak"] - df_single[df_single$vaccine_choice == "Perfect" & df_single$mig_rate == df_single_diff[i,"mig_rate"], "prob_outbreak"]
+  
 }
 
 #### Plot single year-horizon ####
@@ -69,12 +74,14 @@ ggplot() +
 ggsave(file = "figures/Figure_DD_single.pdf", width = 3, height = 3, units = "in")
 
 #### Multiple Loops through migration rates ####
-horizons <- c(1, 2, 3, 4, 5, 6)
+horizons <- c(2, 3, 4, 5, 6)
 
 df <- NA
 df_diff <- NA
 for (years in horizons){
-  vaccine_choices = c("None", "Shanchol")
+  # vaccine_choices = c("None", "Shanchol")
+  vaccine_choices = c("None", "Perfect")
+  
   mig_rate_choices = seq(0, 1/1, length.out = 20)
   
   df_temp <- data.frame(vaccine_choice = rep(vaccine_choices, each = length(mig_rate_choices)), mig_rate = rep(mig_rate_choices, length(vaccine_choices)), prob_outbreak = NA)
@@ -87,6 +94,8 @@ for (years in horizons){
   df_temp_diff <- data.frame(mig_rate = mig_rate_choices, diff = NA)
   for (i in 1:nrow(df_temp_diff)){
     df_temp_diff[i, "diff"] <- df_temp[df_temp$vaccine_choice == "None" & df_temp$mig_rate == df_temp_diff[i,"mig_rate"], "prob_outbreak"] - df_temp[df_temp$vaccine_choice == "Shanchol" & df_temp$mig_rate == df_temp_diff[i,"mig_rate"], "prob_outbreak"]
+    # df_temp_diff[i, "diff"] <- df_temp[df_temp$vaccine_choice == "None" & df_temp$mig_rate == df_temp_diff[i,"mig_rate"], "prob_outbreak"] - df_temp[df_temp$vaccine_choice == "Perfect" & df_temp$mig_rate == df_temp_diff[i,"mig_rate"], "prob_outbreak"]
+
   }
   
   df_temp$years <- years
@@ -119,7 +128,8 @@ ggplot() +
   scale_color_brewer(type = "seq", palette = 8, name = "Time Horizon since\nVaccination (years)") +
   scale_x_continuous(breaks = c(0.05, 0.20, 0.333, 0.5, 1/1.5, 1), labels = c("1/20", "1/5", "1/3", "1/2", "1/1.5", "1/1"), name = "Migration Rate (per year)") + theme(text = element_text(size = 6), legend.text=element_text(size=4), legend.title=element_text(size=4), axis.text.x = element_text(size = 8), axis.text.y = element_text(size = 8)) + scale_y_continuous(breaks = c(0, 0.25, 0.5), labels = c("0", "0.25", "0.50"), limits = c(0,0.6)) + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
 
-# ggsave(file = "figures/Figure_DD.pdf", width = 4, height = 2, units = "in") 
+ggsave(file = "figures/Figure_DD.pdf", width = 4, height = 2, units = "in")
+# ggsave(file = "figures/Figure_DD_Supplement.pdf", width = 4, height = 2, units = "in")
 
 ggplot(df_diff_optimal, aes(x = as.numeric(as.character(years)), y = 1/optimal_mig_rate, color = years)) + geom_point(pch = 17) + theme(panel.grid.minor = element_blank()) + theme_bw() +   scale_color_brewer(type = "seq", palette = 8, name = "Time Horizon\n(years)") + ylab("1/Optimal Migration Rate") + xlab("Time Horizon since\nVaccination (years)") 
 
