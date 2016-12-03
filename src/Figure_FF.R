@@ -26,19 +26,25 @@ require(data.table)
 
 #### Define Static Conditions ####
 years = 10
+# years = 20 # When using perfect vaccine
 times <- seq(0,356*years)
 
 N_pop <- 10000
 N_vax <- N_pop*3
+# N_vax <- N_pop*3 # When using perfect vaccine
+
 
 max_V_months = 12*(4) 
 V_comps_per_month = 1
 n.comps.V = max_V_months*V_comps_per_month
 
 VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Shanchol",bound = TRUE,max_V_months = max_V_months)
+# VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Perfect",bound = TRUE,max_V_months = max_V_months) # When using perfect vaccine
 
 #### Define Variable Conditions ####
 vac_mass_frac_conditions <- c(1, 0.8)     # This also applies to the initial mass coverage for "Mass" and "Mass_Maintain"
+# vac_mass_frac_conditions <- c(1, 0.4)     # When using perfect vaccine
+
 vac_mass_freq_conditions <- c(365, 365*2) # Applies only to "Mass"
 vac_routine_count_conditions <- c(round(N_vax/(365*years)), 1.5*round(N_vax/(365*years)), 2*round(N_vax/(365*years))) # Applies to "Routine" and "Mass_Maintain"
 
@@ -91,6 +97,7 @@ for (row in seq_len(sims)){
                  sigma=1/1.4,                   # Incubation period
                  birth_death_rate=1/(365*40), # Average birth and death rate
                  nat_wane=0*1/(365*10),         # Rate of natural immunity waning
+                 mig_rates_constant = TRUE,      # TRUE if migration rates are constant
                  mig_in= mig_in,             # Rate of immigration
                  mig_out= mig_out,             # Rate of emigration
                  foreign_infection=0.00,        # Proportion of immigrants who are infected
@@ -216,7 +223,9 @@ for (row in 1:nrow(fig_FF_df_bars_summary)){
 # Choose which conditions to keep
 fig_FF_df_melt$keep <- 0
 fig_FF_df_melt[fig_FF_df_melt$strategy == "Mass-then-Maintain" & fig_FF_df_melt$vac_mass_frac_condition == 0.8, "keep"] <- 1
+# fig_FF_df_melt[fig_FF_df_melt$strategy == "Mass-then-Maintain" & fig_FF_df_melt$vac_mass_frac_condition == 0.4, "keep"] <- 1 # When using perfect vaccine
 fig_FF_df_melt[fig_FF_df_melt$strategy == "Mass Vaccination" & fig_FF_df_melt$vac_mass_frac_condition %in% c(1), "keep"] <- 1
+# fig_FF_df_melt[fig_FF_df_melt$strategy == "Mass Vaccination" & fig_FF_df_melt$vac_mass_frac_condition %in% c(0.4), "keep"] <- 1 # When using perfect vaccine
 fig_FF_df_melt[fig_FF_df_melt$strategy == "Routine Vaccination" , "keep"] <- 1
 
 # Set y-values for the bars for these conditions
