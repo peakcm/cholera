@@ -19,12 +19,10 @@ final_epidemic_size <- function(N, R0){
   return(q)
 }
 
-
-q <- final_epidemic_size(1000, 1.1)
-
-cat("The probability of <10 cases is",sum(q[1:10]))
-cat("The probability of 10 to 50 cases is", sum(q[11:51]))
-cat("The probability of >50 cases is", sum(q[52:N]))
-
-hist(q*N)
+# Test function behavior
+# q <- final_epidemic_size(1000, 1.1)
+# cat("The probability of <10 cases is",sum(q[1:10]))
+# cat("The probability of 10 to 50 cases is", sum(q[11:51]))
+# cat("The probability of >50 cases is", sum(q[52:N]))
+# hist(q*N)
 

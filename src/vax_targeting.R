@@ -1,8 +1,8 @@
 #### Influence of mobility on optimal vaccine targeting ####
 
-setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
-source("src/prob_outbreak_fcn.R")
-source("src/calculate_VE.R")
+# setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
+# source("src/prob_outbreak_fcn.R")
+# source("src/calculate_VE.R")
 
 # Sum from 0 to 5 years by day. for (A)*(B)*(C)
 # (A) Expected number of immigrants at time t
