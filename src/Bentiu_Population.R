@@ -1,8 +1,19 @@
 # Bentiu case study #
 setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
 
-#### Load Libraries ####
-library(ggplot2)
+#### Load libraries and functions ####
+source("src/calculate_Re.R")
+source("src/calculate_VE.R")
+source("src/Seasonality.R")
+source("src/prob_outbreak_fcn.R")
+source("src/migration_rate_calculator.R")
+source("src/SIRV_model.R")
+source("src/Run_SIRV_model.R")
+source("src/revaccination.R")
+require(ggplot2)
+
+#### Load workspace ####
+load(file = "src/Figure_GG.RData")
 
 #### Load data ####
 df <- read.csv("data/Bentiu.csv")
@@ -31,7 +42,7 @@ df$influx <- df$pop + df$Entries
 df[df$Date == "2015-07-01", "influx"] <- NA  # Remove a weird observation
 df$outflux <- df$pop - df$Exits
 
-#### Plot ####
+#### Plot Pop size, vaccines, and cases ####
 ggplot(df) + 
   # geom_rect(data = df_rect, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), fill = "white", color = "black") +
   # geom_bar(data = df_cases, aes(x = Date, y = Cases_weekly*500), stat = "identity", width = 2) + 
@@ -44,9 +55,143 @@ ggplot(df) +
   geom_text(data = df[is.na(df$Vaccine.Doses)==0,], aes(x = (Date + 90), y = (Vaccine.Doses/2 - 2000), label = paste(Vaccine.Doses, "\nDoses")), color = "forestgreen", size = 2) +
   scale_y_continuous(breaks = c(0, 5e4, 1e5, 1.5e5), labels = c("0", "50", "100", "150"), name = "Population (thousands)") +
   theme_bw() +
-  theme(text = element_text(size = 6), legend.text=element_text(size=4), axis.text.x = element_text(size = 6), axis.text.y = element_text(size = 6))  +
+  theme(text = element_text(size = 8), axis.text.x = element_text(size = 8), axis.text.y = element_text(size = 8))  +
   scale_x_date(date_labels = "%b '%y") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   ggtitle("Bentiu PoC Camp")
 
-ggsave(file = "figures/Figure_GG.pdf", width = 3, height = 3, units = "in")
+ggsave(file = "figures/Figure_GG.pdf", width = 4, height = 3, units = "in")
+
+
+#### Run simulation for Bentiu ####
+# Time elapses from 
+time_start <- as.numeric(as.Date("2014-06-01"))
+time_end <- as.numeric(as.Date("2016-12-01"))
+times <- seq(0,time_end-time_start)
+
+# Calculate elements of VE
+max_V_months = 48
+V_comps_per_month = 0.5 # choose from 0.5, 1, 1.5, etc.
+
+n.comps.V = max_V_months*V_comps_per_month
+VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Shanchol",bound = TRUE,max_V_months = max_V_months)
+
+# Set migration rates
+knot_1 <- as.numeric(as.Date("2015-12-01")) - time_start
+knot_2 <- (as.numeric(as.Date("2016-04-01"))-time_start) - knot_1
+base_rate <- 1/(365*4.3)
+mig_in <- c(rep(1/(365*1.21)+base_rate, knot_1), rep(0+base_rate, knot_2), rep(0+base_rate, length(times)-knot_1-knot_2))
+mig_out <-  c(rep(0, knot_1)+base_rate, rep(1/(365*1.21)+base_rate, knot_2), rep(0+base_rate, length(times)-knot_1-knot_2))
+
+params <- list(beta=2/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
+               beta_shape = "constant",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
+               beta_amp = 0.05,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
+               beta_phase_shift = 0,          # Phase shift in a sinusoidal seasonal forcing function
+               gamma=1/2,                     # Duration of disease
+               sigma=1/1.4,                   # Incubation period
+               birth_death_rate=1/(365*40),   # Average birth and death rate
+               nat_wane=0*1/(365*10),         # Rate of natural immunity waning
+               mig_rates_constant = FALSE,      # TRUE if migration rates are constant
+               mig_in= mig_in,             # Rate of immigration
+               mig_out= mig_out,             # Rate of emigration
+               foreign_infection=0.00,        # Proportion of immigrants who are infected
+               n.comps.V=n.comps.V,           # Number of V compartments
+               VE=VE,                         # Vaccine efficacy over time
+               V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
+               vac_routine_count = 0,        # Number of courses given each day
+               vac_mass_freq = floor(365*11/12),         # Days between mass re-vaccination campaigns
+               vac_mass_frac = 0.9,           # Fraction of the population revaccinated during mass revaccination campaigns
+               vac_birth_frac = 0,            # Fraction of babies vaccinated
+               vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
+               vac_max = 174288,                 # Maximum number of vaccine courses to be given
+               vac_recip = c("mass_all"),     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
+               vac_stopper = 370      # Don't vaccinate after this day
+)
+inits = rep(0, 7+params$n.comps.V)
+inits[1] = 7310 # initially susceptible
+inits[2] = 33265 # initially vaccinated
+inits[params$n.comps.V+3] = 0 # initially infected
+inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
+
+test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
+test.run$N <- apply(test.run[,c("S","E","I","R","V_total")], 1, sum)
+
+# Check to make sure number in pop is stationary
+summary(test.run$N)
+# plot(apply(test.run[,c("S","E","I","R","V_total")], 1, sum), type = "l")
+ggplot(test.run, aes(x = time/365, y = N)) + geom_line() + theme_bw() + xlab("Years") + ylab("N")
+
+# Add the first few months pre-vaccination
+time_first <- as.numeric(as.Date("2014-02-01"))
+
+test.run$time <- test.run$time + time_start - time_first
+added <- data.frame(matrix(nrow = time_start - time_first, ncol = ncol(test.run)))
+names(added) <- names(test.run)
+added$time <- 1:(time_start - time_first)
+added[,c("S", "N")] <- seq(from = 4291, to = 40574, length.out = time_start - time_first)
+added[,3:33] <- 0
+added[,"Re"] <- params$beta/params$gamma
+added[,"prob_outbreak_10"] <- prob_outbreak_fcn(R = added[,"Re"], outbreak_size = 10)
+added[,"prob_outbreak_50"] <- prob_outbreak_fcn(R = added[,"Re"], outbreak_size = 50)
+
+test.run <- rbind(added, test.run)
+
+test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
+
+# Store with different R
+test.run$R0 <- params$beta/params$gamma
+
+# storage <- test.run
+storage <- rbind(storage, test.run)
+storage$time <- as.POSIXct(as.character(storage$time))
+summary(storage[storage$R0 == 1, "time"])
+storage <- storage[order(storage$time),]
+
+storage$R0 <- factor(storage$R0, levels = c(2, 1.5, 1), labels = c("High (2)", "Moderate (1.5)", "Low (1)"), ordered = TRUE)
+
+# Plot results
+ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
+  geom_ribbon(aes(x = time, ymin = Re/(params$beta/params$gamma), ymax = 1), fill = "forestgreen", alpha = 0.5) +
+  theme_bw() + xlab("Date") + ylab("X(t)") + ylim(0.5,1) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=8), legend.text=element_text(size=8), legend.title=element_text(size=8))
+
+ggsave(file = "figures/Figure_GG_Xt.pdf", width = 4, height = 1.5, units = "in")
+
+ggplot(test.run, aes(x = time, y = Re)) + geom_line() + geom_hline(yintercept=1, col="red") + 
+  theme_bw() + xlab("Date") + ylab("R Effective") +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(test.run, aes(x = time, y = prob_outbreak_50)) + geom_line() + theme_bw() + xlab("Date") + ylab("Probability of\nan Outbreak (>50)") + scale_y_continuous(limits = c(0,1))+  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(storage, aes(x = time, y = prob_outbreak_50, group = R0, color = R0)) + geom_line() + theme_bw() + xlab("Date") + ylab("Probability of\nan Outbreak (>50)") + scale_y_continuous(limits = c(0,1))+  scale_x_datetime(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + scale_color_discrete(name = "Basic Reproductive\nNumber") + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=8), legend.text=element_text(size=8), legend.title=element_text(size=8)) + theme(legend.position="none")
+
+ggsave(file = "figures/Figure_GG_prob.pdf", width = 4, height = 1.5, units = "in")
+
+ggplot(test.run, aes(x = time)) +
+  geom_line(aes(y=V_total), col="black", lty="dashed") +
+  geom_line(aes(y=S), col="blue") +
+  # geom_bar(aes(y=10*E), stat="identity", col="pink", alpha=0.1) +
+  geom_bar(aes(y=10*I),stat="identity", col="darkred", alpha=0.1) +
+  geom_line(aes(y=R), col="forestgreen") +
+  theme_bw() + xlab("Date") + ylab("Number of People\nNote: 'I' are scaled by 10") +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax))) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+#### Use Wallinga Teunis method to calculate Re using observed Bentiu case data ####
+library(R0)
+
+check.incid(df_cases$Cases, t=df_cases$Date)
+plot(check.incid(df_cases$Cases, t=df_cases$Date)$incid, type = "b")
+
+sa.GT(df_cases$Cases, GT.type="gamma", GT.mean=seq(3,10,1), GT.sd.range=1, est.method="EG")
+
+#Time dependent method
+mGT<-generation.time("gamma", c(2.14, 1.13))
+output <- est.R0.TD(df_cases$Cases, mGT,nsim=1000)
+plot(output)
+
+#uses multiple methods
+output2 <- estimate.R(df_cases$Cases, mGT, methods=c("EG", "ML", "TD", "AR", "SB"), pop.size=100000, begin=1, end=31, nsim=1000)
+plot(output2)
+output2 #use R, not R Studio, to see multiple plots
+
+#### Save workspace ####
+save.image(file = "src/Figure_GG.RData")
