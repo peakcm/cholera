@@ -73,7 +73,8 @@ for (row in seq_len(sims)){
                  vac_birth_frac = 0,            # Fraction of babies vaccinated
                  vac_mig_frac = 0,            # Fraction of immigrants vaccinated upon arrival
                  vac_max = 5e50,                 # Maximum number of vaccines to be given
-                 vac_recip = c("all")  # Recipients of vaccination ("all", "S", "migrant", "birth")
+                 vac_recip = c("all"),  # Recipients of vaccination ("all", "S", "migrant", "birth")
+                 vac_stopper = 1e10          # Don't vaccinate after this day
   )
   inits = rep(0, 7+params$n.comps.V)
   inits[1] = 0000 # initially susceptible
