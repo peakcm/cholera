@@ -63,7 +63,7 @@ ggplot(df) +
 ggsave(file = "figures/Figure_GG.pdf", width = 4, height = 3, units = "in")
 
 
-#### Run simulation for Bentiu ####
+#### Run Observed simulation for Bentiu ####
 # Time elapses from 
 time_start <- as.numeric(as.Date("2014-06-01"))
 time_end <- as.numeric(as.Date("2016-12-01"))
@@ -161,6 +161,8 @@ ggplot(test.run, aes(x = time, y = Re)) + geom_line() + geom_hline(yintercept=1,
 
 ggplot(test.run, aes(x = time, y = prob_outbreak_50)) + geom_line() + theme_bw() + xlab("Date") + ylab("Probability of\nan Outbreak (>50)") + scale_y_continuous(limits = c(0,1))+  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
+prob_outbreak_fcn(R = 1, outbreak_size = 50)
+
 ggplot(storage, aes(x = time, y = prob_outbreak_50, group = R0, color = R0)) + geom_line() + theme_bw() + xlab("Date") + ylab("Probability of\nan Outbreak (>50)") + scale_y_continuous(limits = c(0,1))+  scale_x_datetime(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + scale_color_discrete(name = "Basic Reproductive\nNumber") + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=8), legend.text=element_text(size=8), legend.title=element_text(size=8)) + theme(legend.position="none")
 
 ggsave(file = "figures/Figure_GG_prob.pdf", width = 4, height = 1.5, units = "in")
@@ -172,6 +174,398 @@ ggplot(test.run, aes(x = time)) +
   geom_bar(aes(y=10*I),stat="identity", col="darkred", alpha=0.1) +
   geom_line(aes(y=R), col="forestgreen") +
   theme_bw() + xlab("Date") + ylab("Number of People\nNote: 'I' are scaled by 10") +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax))) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+#### Run Counterfactual simulation for Bentiu ####
+VE_counterfactual <- rep(max(VE), length(VE))
+base_rate_counterfactual <- 0
+mig_in_counterfactual <- 0
+mig_out_counterfactual <- 0
+birth_death_rate_counterfactual <- 0
+
+params <- list(beta=1/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
+               beta_shape = "constant",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
+               beta_amp = 0.05,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
+               beta_phase_shift = 0,          # Phase shift in a sinusoidal seasonal forcing function
+               gamma=1/2,                     # Duration of disease
+               sigma=1/1.4,                   # Incubation period
+               birth_death_rate=birth_death_rate_counterfactual,   # Average birth and death rate
+               nat_wane=0*1/(365*10),         # Rate of natural immunity waning
+               mig_rates_constant = TRUE,      # TRUE if migration rates are constant
+               mig_in= mig_in_counterfactual,             # Rate of immigration
+               mig_out= mig_out_counterfactual,             # Rate of emigration
+               foreign_infection=0.00,        # Proportion of immigrants who are infected
+               n.comps.V=n.comps.V,           # Number of V compartments
+               VE=VE_counterfactual,                         # Vaccine efficacy over time
+               V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
+               vac_routine_count = 0,        # Number of courses given each day
+               vac_mass_freq = floor(365*11/12),         # Days between mass re-vaccination campaigns
+               vac_mass_frac = 0.9,           # Fraction of the population revaccinated during mass revaccination campaigns
+               vac_birth_frac = 0,            # Fraction of babies vaccinated
+               vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
+               vac_max = 113426,                 # Maximum number of vaccine courses to be given
+               vac_recip = c("mass_all"),     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
+               vac_stopper = 370      # Don't vaccinate after this day
+)
+inits = rep(0, 7+params$n.comps.V)
+inits[1] = 66735 # initially susceptible
+inits[2] = 33265 # initially vaccinated
+inits[params$n.comps.V+3] = 0 # initially infected
+inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
+
+test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
+test.run$N <- apply(test.run[,c("S","E","I","R","V_total")], 1, sum)
+
+# Check to make sure number in pop is stationary
+summary(test.run$N)
+# plot(apply(test.run[,c("S","E","I","R","V_total")], 1, sum), type = "l")
+ggplot(test.run, aes(x = time/365, y = N)) + geom_line() + theme_bw() + xlab("Years") + ylab("N")
+
+# Add the first few months pre-vaccination
+time_first <- as.numeric(as.Date("2014-02-01"))
+
+test.run$time <- test.run$time + time_start - time_first
+added <- data.frame(matrix(nrow = time_start - time_first, ncol = ncol(test.run)))
+names(added) <- names(test.run)
+added$time <- 1:(time_start - time_first)
+added[,c("S", "N")] <- 100000
+added[,3:33] <- 0
+added[,"Re"] <- params$beta/params$gamma
+added[,"prob_outbreak_10"] <- prob_outbreak_fcn(R = added[,"Re"], outbreak_size = 10)
+added[,"prob_outbreak_50"] <- prob_outbreak_fcn(R = added[,"Re"], outbreak_size = 50)
+
+test.run <- rbind(added, test.run)
+
+test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
+
+# Store with different R
+test.run$R0 <- params$beta/params$gamma
+
+# Plot results
+ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
+  geom_ribbon(aes(x = time, ymin = Re/(params$beta/params$gamma), ymax = 1), fill = "forestgreen", alpha = 0.5) +
+  theme_bw() + xlab("Date") + ylab("X(t)") + ylim(0,1) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=8), legend.text=element_text(size=8), legend.title=element_text(size=8))
+
+ggplot(test.run, aes(x = time, y = prob_outbreak_50)) + geom_line() + theme_bw() + xlab("Date") + ylab("Probability of\nan Outbreak (>50)") + scale_y_continuous(limits = c(0,1))+  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+prob_outbreak_fcn(R = 1, outbreak_size = 50)
+
+ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax))) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+
+#### Run Counterfactual simulation for Bentiu with empirical VE(t) ####
+VE_counterfactual <- rep(max(VE), length(VE))
+base_rate_counterfactual <- 0
+mig_in_counterfactual <- 0
+mig_out_counterfactual <- 0
+birth_death_rate_counterfactual <- 0
+
+params <- list(beta=1/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
+               beta_shape = "constant",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
+               beta_amp = 0.05,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
+               beta_phase_shift = 0,          # Phase shift in a sinusoidal seasonal forcing function
+               gamma=1/2,                     # Duration of disease
+               sigma=1/1.4,                   # Incubation period
+               birth_death_rate=birth_death_rate_counterfactual,   # Average birth and death rate
+               nat_wane=0*1/(365*10),         # Rate of natural immunity waning
+               mig_rates_constant = TRUE,      # TRUE if migration rates are constant
+               mig_in= mig_in_counterfactual,             # Rate of immigration
+               mig_out= mig_out_counterfactual,             # Rate of emigration
+               foreign_infection=0.00,        # Proportion of immigrants who are infected
+               n.comps.V=n.comps.V,           # Number of V compartments
+               VE=VE,                         # Vaccine efficacy over time
+               V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
+               vac_routine_count = 0,        # Number of courses given each day
+               vac_mass_freq = floor(365*11/12),         # Days between mass re-vaccination campaigns
+               vac_mass_frac = 0.9,           # Fraction of the population revaccinated during mass revaccination campaigns
+               vac_birth_frac = 0,            # Fraction of babies vaccinated
+               vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
+               vac_max = 113426,                 # Maximum number of vaccine courses to be given
+               vac_recip = c("mass_all"),     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
+               vac_stopper = 370      # Don't vaccinate after this day
+)
+inits = rep(0, 7+params$n.comps.V)
+inits[1] = 66735 # initially susceptible
+inits[2] = 33265 # initially vaccinated
+inits[params$n.comps.V+3] = 0 # initially infected
+inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
+
+test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
+test.run$N <- apply(test.run[,c("S","E","I","R","V_total")], 1, sum)
+
+# Check to make sure number in pop is stationary
+summary(test.run$N)
+# plot(apply(test.run[,c("S","E","I","R","V_total")], 1, sum), type = "l")
+ggplot(test.run, aes(x = time/365, y = N)) + geom_line() + theme_bw() + xlab("Years") + ylab("N")
+
+# Check to make sure enough vaccines were given (106,624)
+test.run[nrow(test.run), "Vax"]
+
+# Add the first few months pre-vaccination
+time_first <- as.numeric(as.Date("2014-02-01"))
+
+test.run$time <- test.run$time + time_start - time_first
+added <- data.frame(matrix(nrow = time_start - time_first, ncol = ncol(test.run)))
+names(added) <- names(test.run)
+added$time <- 1:(time_start - time_first)
+added[,c("S", "N")] <- 100000
+added[,3:33] <- 0
+added[,"Re"] <- params$beta/params$gamma
+added[,"prob_outbreak_10"] <- prob_outbreak_fcn(R = added[,"Re"], outbreak_size = 10)
+added[,"prob_outbreak_50"] <- prob_outbreak_fcn(R = added[,"Re"], outbreak_size = 50)
+
+test.run <- rbind(added, test.run)
+
+test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
+
+# Store with different R
+test.run$R0 <- params$beta/params$gamma
+
+test.run[test.run$time > "2016-10-16","Re"][1]
+
+# Plot results
+ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
+  geom_ribbon(aes(x = time, ymin = Re/(params$beta/params$gamma), ymax = 1), fill = "forestgreen", alpha = 0.5) +
+  theme_bw() + xlab("Date") + ylab("X(t)") + ylim(0,1) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=8), legend.text=element_text(size=8), legend.title=element_text(size=8))
+
+ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax))) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+
+#### Run Counterfactual simulation for Bentiu with empirical N(t) ####
+VE_counterfactual <- rep(max(VE), length(VE))
+base_rate_counterfactual <- 0
+mig_in <- c(rep(1/(365*1.21)+base_rate_counterfactual, knot_1), rep(0+base_rate_counterfactual, knot_2), rep(0+base_rate_counterfactual, length(times)-knot_1-knot_2))
+mig_out <-  c(rep(0, knot_1)+base_rate_counterfactual, rep(1/(365*1.21)+base_rate_counterfactual, knot_2), rep(0+base_rate_counterfactual, length(times)-knot_1-knot_2))
+
+birth_death_rate_counterfactual <- 0
+
+params <- list(beta=1/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
+               beta_shape = "constant",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
+               beta_amp = 0.05,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
+               beta_phase_shift = 0,          # Phase shift in a sinusoidal seasonal forcing function
+               gamma=1/2,                     # Duration of disease
+               sigma=1/1.4,                   # Incubation period
+               birth_death_rate=birth_death_rate_counterfactual,   # Average birth and death rate
+               nat_wane=0*1/(365*10),         # Rate of natural immunity waning
+               mig_rates_constant = FALSE,      # TRUE if migration rates are constant
+               mig_in= mig_in,             # Rate of immigration
+               mig_out= mig_out,             # Rate of emigration
+               foreign_infection=0.00,        # Proportion of immigrants who are infected
+               n.comps.V=n.comps.V,           # Number of V compartments
+               VE=VE_counterfactual,                         # Vaccine efficacy over time
+               V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
+               vac_routine_count = 0,        # Number of courses given each day
+               vac_mass_freq = floor(365*11/12),         # Days between mass re-vaccination campaigns
+               vac_mass_frac = 0.9,           # Fraction of the population revaccinated during mass revaccination campaigns
+               vac_birth_frac = 0,            # Fraction of babies vaccinated
+               vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
+               vac_max = 113526,                 # Maximum number of vaccine courses to be given
+               vac_recip = c("mass_all"),     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
+               vac_stopper = 370      # Don't vaccinate after this day
+)
+inits = rep(0, 7+params$n.comps.V)
+inits[1] = 7310 # initially susceptible
+inits[2] = 33265 # initially vaccinated
+inits[params$n.comps.V+3] = 0 # initially infected
+inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
+
+test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
+test.run$N <- apply(test.run[,c("S","E","I","R","V_total")], 1, sum)
+
+# Check to make sure number in pop is stationary
+summary(test.run$N)
+# plot(apply(test.run[,c("S","E","I","R","V_total")], 1, sum), type = "l")
+ggplot(test.run, aes(x = time/365, y = N)) + geom_line() + theme_bw() + xlab("Years") + ylab("N")
+
+# Check to make sure enough vaccines were given (106,624)
+test.run[nrow(test.run), "Vax"]
+
+# Add the first few months pre-vaccination
+time_first <- as.numeric(as.Date("2014-02-01"))
+
+test.run$time <- test.run$time + time_start - time_first
+added <- data.frame(matrix(nrow = time_start - time_first, ncol = ncol(test.run)))
+names(added) <- names(test.run)
+added$time <- 1:(time_start - time_first)
+added[,c("S", "N")] <- 100000
+added[,3:33] <- 0
+added[,"Re"] <- params$beta/params$gamma
+added[,"prob_outbreak_10"] <- prob_outbreak_fcn(R = added[,"Re"], outbreak_size = 10)
+added[,"prob_outbreak_50"] <- prob_outbreak_fcn(R = added[,"Re"], outbreak_size = 50)
+
+test.run <- rbind(added, test.run)
+
+test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
+
+# Store with different R
+test.run$R0 <- params$beta/params$gamma
+
+test.run[test.run$time > "2016-10-16","Re"][1]
+
+# Plot results
+ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
+  geom_ribbon(aes(x = time, ymin = Re/(params$beta/params$gamma), ymax = 1), fill = "forestgreen", alpha = 0.5) +
+  theme_bw() + xlab("Date") + ylab("X(t)") + ylim(0,1) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=8), legend.text=element_text(size=8), legend.title=element_text(size=8))
+
+ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax))) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+#### Run Counterfactual simulation for Bentiu with only birth/death ####
+birth_death_rate <- 1/(365*40)
+VE_counterfactual <- rep(max(VE), length(VE))
+base_rate_counterfactual <- 0
+mig_in <- 0
+mig_out <- 0
+
+birth_death_rate_counterfactual <- 0
+
+params <- list(beta=1/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
+               beta_shape = "constant",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
+               beta_amp = 0.05,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
+               beta_phase_shift = 0,          # Phase shift in a sinusoidal seasonal forcing function
+               gamma=1/2,                     # Duration of disease
+               sigma=1/1.4,                   # Incubation period
+               birth_death_rate=birth_death_rate,   # Average birth and death rate
+               nat_wane=0*1/(365*10),         # Rate of natural immunity waning
+               mig_rates_constant = TRUE,      # TRUE if migration rates are constant
+               mig_in= mig_in,             # Rate of immigration
+               mig_out= mig_out,             # Rate of emigration
+               foreign_infection=0.00,        # Proportion of immigrants who are infected
+               n.comps.V=n.comps.V,           # Number of V compartments
+               VE=VE_counterfactual,                         # Vaccine efficacy over time
+               V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
+               vac_routine_count = 0,        # Number of courses given each day
+               vac_mass_freq = floor(365*11/12),         # Days between mass re-vaccination campaigns
+               vac_mass_frac = 0.9,           # Fraction of the population revaccinated during mass revaccination campaigns
+               vac_birth_frac = 0,            # Fraction of babies vaccinated
+               vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
+               vac_max = 113426,                 # Maximum number of vaccine courses to be given
+               vac_recip = c("mass_all"),     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
+               vac_stopper = 370      # Don't vaccinate after this day
+)
+inits = rep(0, 7+params$n.comps.V)
+inits[1] = 66735 # initially susceptible
+inits[2] = 33265 # initially vaccinated
+inits[params$n.comps.V+3] = 0 # initially infected
+inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
+
+test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
+test.run$N <- apply(test.run[,c("S","E","I","R","V_total")], 1, sum)
+
+# Check to make sure number in pop is stationary
+summary(test.run$N)
+# plot(apply(test.run[,c("S","E","I","R","V_total")], 1, sum), type = "l")
+ggplot(test.run, aes(x = time/365, y = N)) + geom_line() + theme_bw() + xlab("Years") + ylab("N")
+
+# Check to make sure enough vaccines were given (106,624)
+test.run[nrow(test.run), "Vax"]
+
+# Add the first few months pre-vaccination
+time_first <- as.numeric(as.Date("2014-02-01"))
+
+test.run$time <- test.run$time + time_start - time_first
+added <- data.frame(matrix(nrow = time_start - time_first, ncol = ncol(test.run)))
+names(added) <- names(test.run)
+added$time <- 1:(time_start - time_first)
+added[,c("S", "N")] <- 100000
+added[,3:33] <- 0
+added[,"Re"] <- params$beta/params$gamma
+added[,"prob_outbreak_10"] <- prob_outbreak_fcn(R = added[,"Re"], outbreak_size = 10)
+added[,"prob_outbreak_50"] <- prob_outbreak_fcn(R = added[,"Re"], outbreak_size = 50)
+
+test.run <- rbind(added, test.run)
+
+test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
+
+# Store with different R
+test.run$R0 <- params$beta/params$gamma
+
+test.run[test.run$time > "2016-10-16","Re"][1]
+
+# Plot results
+ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
+  geom_ribbon(aes(x = time, ymin = Re/(params$beta/params$gamma), ymax = 1), fill = "forestgreen", alpha = 0.5) +
+  theme_bw() + xlab("Date") + ylab("X(t)") + ylim(0,1) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=8), legend.text=element_text(size=8), legend.title=element_text(size=8))
+
+ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax))) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+
+#### Run Counterfactual simulation for Bentiu with only routine migration ####
+params <- list(beta=1/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
+               beta_shape = "constant",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
+               beta_amp = 0.05,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
+               beta_phase_shift = 0,          # Phase shift in a sinusoidal seasonal forcing function
+               gamma=1/2,                     # Duration of disease
+               sigma=1/1.4,                   # Incubation period
+               birth_death_rate=birth_death_rate_counterfactual,   # Average birth and death rate
+               nat_wane=0*1/(365*10),         # Rate of natural immunity waning
+               mig_rates_constant = TRUE,      # TRUE if migration rates are constant
+               mig_in= base_rate,             # Rate of immigration
+               mig_out= base_rate,             # Rate of emigration
+               foreign_infection=0.00,        # Proportion of immigrants who are infected
+               n.comps.V=n.comps.V,           # Number of V compartments
+               VE=VE_counterfactual,                         # Vaccine efficacy over time
+               V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
+               vac_routine_count = 0,        # Number of courses given each day
+               vac_mass_freq = floor(365*11/12),         # Days between mass re-vaccination campaigns
+               vac_mass_frac = 0.9,           # Fraction of the population revaccinated during mass revaccination campaigns
+               vac_birth_frac = 0,            # Fraction of babies vaccinated
+               vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
+               vac_max = 112526,                 # Maximum number of vaccine courses to be given
+               vac_recip = c("mass_all"),     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
+               vac_stopper = 370      # Don't vaccinate after this day
+)
+inits = rep(0, 7+params$n.comps.V)
+inits[1] = 66735 # initially susceptible
+inits[2] = 33265 # initially vaccinated
+inits[params$n.comps.V+3] = 0 # initially infected
+inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
+
+test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
+test.run$N <- apply(test.run[,c("S","E","I","R","V_total")], 1, sum)
+
+# Check to make sure number in pop is stationary
+summary(test.run$N)
+# plot(apply(test.run[,c("S","E","I","R","V_total")], 1, sum), type = "l")
+ggplot(test.run, aes(x = time/365, y = N)) + geom_line() + theme_bw() + xlab("Years") + ylab("N")
+
+# Check to make sure enough vaccines were given (106,624)
+test.run[nrow(test.run), "Vax"]
+
+# Add the first few months pre-vaccination
+time_first <- as.numeric(as.Date("2014-02-01"))
+
+test.run$time <- test.run$time + time_start - time_first
+added <- data.frame(matrix(nrow = time_start - time_first, ncol = ncol(test.run)))
+names(added) <- names(test.run)
+added$time <- 1:(time_start - time_first)
+added[,c("S", "N")] <- 100000
+added[,3:33] <- 0
+added[,"Re"] <- params$beta/params$gamma
+added[,"prob_outbreak_10"] <- prob_outbreak_fcn(R = added[,"Re"], outbreak_size = 10)
+added[,"prob_outbreak_50"] <- prob_outbreak_fcn(R = added[,"Re"], outbreak_size = 50)
+
+test.run <- rbind(added, test.run)
+
+test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
+
+# Store with different R
+test.run$R0 <- params$beta/params$gamma
+
+test.run[test.run$time > "2016-10-16","Re"][1]
+
+# Plot results
+ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
+  geom_ribbon(aes(x = time, ymin = Re/(params$beta/params$gamma), ymax = 1), fill = "forestgreen", alpha = 0.5) +
+  theme_bw() + xlab("Date") + ylab("X(t)") + ylim(0,1) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=8), legend.text=element_text(size=8), legend.title=element_text(size=8))
 
 ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax))) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
@@ -191,7 +585,7 @@ plot(output)
 #uses multiple methods
 output2 <- estimate.R(df_cases$Cases, mGT, methods=c("EG", "ML", "TD", "AR", "SB"), pop.size=100000, begin=1, end=31, nsim=1000)
 plot(output2)
-output2 #use R, not R Studio, to see multiple plots
+output2
 
 #### Save workspace ####
 save.image(file = "src/Figure_GG.RData")
