@@ -1,6 +1,6 @@
 #### Function to perform revaccination ####
 
-revaccination <- function(t, N, S, V.states.vector, Vax, vac_routine_count, vac_mass_freq, vac_mass_frac, vac_mig_frac, vac_recip, vac_max, birth_rate, mig_in, vac_birth_frac){
+revaccination <- function(t, N, S, V.states.vector, Vax, vac_routine_count, vac_mass_freq, vac_mass_frac, vac_mig_frac, vac_recip, vac_max, birth_rate, mig_in, vac_birth_frac, vac_stopper=1e20){
   # In the ODE, the entire compartment cannot move at once, so the vaccine fraction needs to be reduced
   if(vac_mass_frac > 0.99){vac_mass_frac <- 0.99}
   
@@ -8,6 +8,11 @@ revaccination <- function(t, N, S, V.states.vector, Vax, vac_routine_count, vac_
   vax_rem <- vac_max - Vax
   if (vac_routine_count > vax_rem){
     vac_routine_count <- vax_rem
+  }
+  
+  # Check if vac_stopper < t, then set vax_rem to zero. Useful only for the Bentiu case study
+  if (vac_stopper < t){
+    vax_rem <- 0
   }
 
   # Initalize
