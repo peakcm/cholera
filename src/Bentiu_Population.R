@@ -78,18 +78,18 @@ VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Shanchol",b
 
 # Set migration rates
 knot_1 <- as.numeric(as.Date("2015-12-01")) - time_start
-knot_2 <- (as.numeric(as.Date("2016-04-01"))-time_start) - knot_1
+knot_2 <- (as.numeric(as.Date("2016-05-01"))-time_start) - knot_1
 base_rate <- 1/(365*4.3)
 mig_in <- c(rep(1/(365*1.21)+base_rate, knot_1), rep(0+base_rate, knot_2), rep(0+base_rate, length(times)-knot_1-knot_2))
 mig_out <-  c(rep(0, knot_1)+base_rate, rep(1/(365*1.21)+base_rate, knot_2), rep(0+base_rate, length(times)-knot_1-knot_2))
 
-params <- list(beta=2/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
+params <- list(beta=1/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
                beta_shape = "constant",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
                beta_amp = 0.05,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
                beta_phase_shift = 0,          # Phase shift in a sinusoidal seasonal forcing function
                gamma=1/2,                     # Duration of disease
                sigma=1/1.4,                   # Incubation period
-               birth_death_rate=1/(365*40),   # Average birth and death rate
+               birth_death_rate=1/(365*24.4),   # Average birth and death rate
                nat_wane=0*1/(365*10),         # Rate of natural immunity waning
                mig_rates_constant = FALSE,      # TRUE if migration rates are constant
                mig_in= mig_in,             # Rate of immigration
@@ -138,16 +138,7 @@ test.run <- rbind(added, test.run)
 
 test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
 
-# Store with different R
-test.run$R0 <- params$beta/params$gamma
-
-# storage <- test.run
-storage <- rbind(storage, test.run)
-storage$time <- as.POSIXct(as.character(storage$time))
-summary(storage[storage$R0 == 1, "time"])
-storage <- storage[order(storage$time),]
-
-storage$R0 <- factor(storage$R0, levels = c(2, 1.5, 1), labels = c("High (2)", "Moderate (1.5)", "Low (1)"), ordered = TRUE)
+ggplot() + geom_line(data = test.run, aes(x = time, y = N)) + theme_bw() + xlab("Years") + ylab("N")
 
 # Plot results
 ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
@@ -161,12 +152,6 @@ ggplot(test.run, aes(x = time, y = Re)) + geom_line() + geom_hline(yintercept=1,
 
 ggplot(test.run, aes(x = time, y = prob_outbreak_50)) + geom_line() + theme_bw() + xlab("Date") + ylab("Probability of\nan Outbreak (>50)") + scale_y_continuous(limits = c(0,1))+  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-prob_outbreak_fcn(R = 1, outbreak_size = 50)
-
-ggplot(storage, aes(x = time, y = prob_outbreak_50, group = R0, color = R0)) + geom_line() + theme_bw() + xlab("Date") + ylab("Probability of\nan Outbreak (>50)") + scale_y_continuous(limits = c(0,1))+  scale_x_datetime(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + scale_color_discrete(name = "Basic Reproductive\nNumber") + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=8), legend.text=element_text(size=8), legend.title=element_text(size=8)) + theme(legend.position="none")
-
-ggsave(file = "figures/Figure_GG_prob.pdf", width = 4, height = 1.5, units = "in")
-
 ggplot(test.run, aes(x = time)) +
   geom_line(aes(y=V_total), col="black", lty="dashed") +
   geom_line(aes(y=S), col="blue") +
@@ -177,6 +162,21 @@ ggplot(test.run, aes(x = time)) +
 
 ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax))) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
+#### Plot Pop size and simulated Pop size ####
+ggplot(df) + 
+  geom_vline(xintercept = as.numeric(as.Date("2014-06-01")), col = "lightblue", lty = "longdash") + 
+  geom_vline(xintercept = as.numeric(as.Date("2015-12-01")), col = "lightblue", lty = "longdash") + 
+  geom_vline(xintercept = as.numeric(as.Date("2016-05-01")), col = "lightblue", lty = "longdash") + 
+  geom_line(aes(x = Date, y = pop), color = "black") +
+  scale_y_continuous(breaks = c(0, 5e4, 1e5, 1.5e5), labels = c("0", "50", "100", "150"), name = "Population (thousands)") +
+  theme_bw() +
+  theme(text = element_text(size = 8), axis.text.x = element_text(size = 8), axis.text.y = element_text(size = 8))  +
+  scale_x_date(date_labels = "%b '%y") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_line(data = test.run, aes(x = time, y = N), color = "blue", alpha = 0.5) +
+  ggtitle("Bentiu PoC Camp")
+
+ggsave(file = "figures/Figure_GG_Pop.pdf", width = 4, height = 3, units = "in")
 
 #### Run Counterfactual simulation for Bentiu ####
 VE_counterfactual <- rep(max(VE), length(VE))
@@ -417,7 +417,7 @@ ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date
 
 
 #### Run Counterfactual simulation for Bentiu with only birth/death ####
-birth_death_rate <- 1/(365*40)
+birth_death_rate <- 1/(365*24.4)
 VE_counterfactual <- rep(max(VE), length(VE))
 base_rate_counterfactual <- 0
 mig_in <- 0
