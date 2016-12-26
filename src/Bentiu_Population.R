@@ -11,6 +11,7 @@ source("src/SIRV_model.R")
 source("src/Run_SIRV_model.R")
 source("src/revaccination.R")
 require(ggplot2)
+require(R0)
 
 #### Load workspace ####
 load(file = "src/Figure_GG.RData")
@@ -570,8 +571,6 @@ ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(a
 ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax))) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 #### Use Wallinga Teunis method to calculate Re using observed Bentiu case data ####
-library(R0)
-
 check.incid(df_cases$Cases, t=df_cases$Date)
 plot(check.incid(df_cases$Cases, t=df_cases$Date)$incid, type = "b")
 
@@ -579,8 +578,27 @@ sa.GT(df_cases$Cases, GT.type="gamma", GT.mean=seq(3,10,1), GT.sd.range=1, est.m
 
 #Time dependent method
 mGT<-generation.time("gamma", c(2.14, 1.13))
-output <- est.R0.TD(df_cases$Cases, mGT,nsim=1000)
+output <- est.R0.TD(df_cases$Cases, mGT,nsim=1000, begin=1, end=31,)
 plot(output)
+
+df_cases$R <- output$R
+df_cases$R_lower <- output$conf.int[,1]
+df_cases$R_upper <- output$conf.int[,2]
+df_cases$Date <- as.Date(as.character(df_cases$Date), format = "%m/%d/%y")
+
+ggplot(df_cases, aes(x = Date)) +
+  theme_bw() +
+  geom_bar(aes(y = Cases/5), stat = "identity") +
+  geom_hline(yintercept = 1, color = "red", lty = "longdash") +
+  geom_ribbon(aes(ymin = R_lower, ymax = R_upper), fill = "pink", alpha = 0.5) +
+  geom_line(aes( y = R), color = "darkred") +
+  # scale_y_continuous(name = expression(R["t"])) +
+  scale_y_continuous(name = "Daily Cholera Cases", breaks = c(0, 1, 2, 3, 4, 5), labels = c(0, 5, 10, 15, 20, 25), position = "right") +
+  scale_x_date(date_labels = "%b %d") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggsave(file = "figures/Figure_GG_RtLeft.pdf", width = 4, height = 3, units = "in")
+ggsave(file = "figures/Figure_GG_RtRight.pdf", width = 4, height = 3, units = "in")
 
 #uses multiple methods
 output2 <- estimate.R(df_cases$Cases, mGT, methods=c("EG", "ML", "TD", "AR", "SB"), pop.size=100000, begin=1, end=31, nsim=1000)
