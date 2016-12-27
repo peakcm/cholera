@@ -11,7 +11,7 @@
 setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
 
 #### Load workspace ####
-load(file = "src/Figure_AA.RData")
+load(file = "src/Figure_FF.RData")
 
 #### Load libraries and functions ####
 source("src/calculate_Re.R")
