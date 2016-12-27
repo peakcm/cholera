@@ -577,8 +577,10 @@ plot(check.incid(df_cases$Cases, t=df_cases$Date)$incid, type = "b")
 sa.GT(df_cases$Cases, GT.type="gamma", GT.mean=seq(3,10,1), GT.sd.range=1, est.method="EG")
 
 #Time dependent method
-mGT<-generation.time("gamma", c(2.14, 1.13))
-output <- est.R0.TD(df_cases$Cases, mGT,nsim=1000, begin=1, end=31,)
+mGT<-generation.time("gamma", c(5, 7.13))
+plot(mGT,xlim = c(0, 30))
+plot(cumsum(mGT$GT),xlim = c(1, 30), type = "b")
+output <- est.R0.TD(df_cases$Cases, mGT,nsim=1000, begin=1, end=31)
 plot(output)
 
 df_cases$R <- output$R
