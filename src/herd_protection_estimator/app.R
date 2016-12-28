@@ -47,7 +47,7 @@ ui <- fluidPage(
                             }
                             "))),
    # Application title
-   titlePanel("Herd Immunity Estimator"),
+   titlePanel("Herd Protection Estimator"),
   
   plotOutput("R_t"),
   
@@ -260,7 +260,7 @@ server <- function(input, output) {
    })
    
    output$vax_consumed <- renderText({
-     paste("The number of vaccine courses consumed is: ", round(max(model()$Vax)), "(", round(100*max(model()$Vax)/input$vac_max), "% of the", input$vac_max, "allotted )")
+     paste("The number of vaccine courses consumed is: ", prettyNum(as.integer(round(max(model()$Vax))), big.mark = ","), "(", round(100*max(model()$Vax)/input$vac_max), "% of the", prettyNum(as.integer(input$vac_max), big.mark = ","), "allotted )")
    })
    
 }
