@@ -99,7 +99,7 @@ ui <- fluidPage(
                    "Amplitude of Seasonality:",
                    min = 0,
                    max = 1,
-                   value = 0.2,
+                   value = 0,
                    step = 0.1)),
     column(3, offset = 1,
            sliderInput("VaxCov",
