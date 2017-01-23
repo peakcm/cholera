@@ -23,6 +23,7 @@ source("src/Run_SIRV_model.R")
 source("src/revaccination.R")
 require(ggplot2)
 require(data.table)
+require(deSolve)
 
 #### Define Static Conditions ####
 years = 10
@@ -38,11 +39,11 @@ max_V_months = 12*(4)
 V_comps_per_month = 1
 n.comps.V = max_V_months*V_comps_per_month
 
-VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Shanchol",bound = TRUE,max_V_months = max_V_months)
+VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Dukoral",bound = TRUE,max_V_months = max_V_months)
 # VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Perfect",bound = TRUE,max_V_months = max_V_months) # When using perfect vaccine
 
 #### Define Variable Conditions ####
-vac_mass_frac_conditions <- c(1, 0.8)     # This also applies to the initial mass coverage for "Mass" and "Mass_Maintain"
+vac_mass_frac_conditions <- c(1, 0.75)     # This also applies to the initial mass coverage for "Mass" and "Mass_Maintain"
 # vac_mass_frac_conditions <- c(1, 0.4)     # When using perfect vaccine
 
 vac_mass_freq_conditions <- c(365, 365*2) # Applies only to "Mass"
@@ -168,7 +169,7 @@ for (row in 1:sims){
 }
 
 # Rename Factors
-fig_FF_df_melt$strategy <- factor(fig_FF_df_melt$strategy, levels = c("Mass", "Mass_Maintain", "Routine"), labels = c("Mass Vaccination", "Mass-then-Maintain", "Routine Vaccination"), ordered = TRUE)
+fig_FF_df_melt$strategy <- factor(fig_FF_df_melt$strategy, levels = c("Mass", "Mass_Maintain", "Routine"), labels = c("Mass Vaccination", "Mass and Maintain", "Routine Vaccination"), ordered = TRUE)
 # fig_FF_df_melt$VE_condition_name <- factor(fig_FF_df_melt$VE_condition_name, levels = c("Shanchol", "Dukoral", "Perfect"), labels = c("Whole Cell\n(eg Shanchol)", "BS-Whole Cell\n(eg Dukoral)", "Perfect Vaccine"), ordered = TRUE)
 # fig_FF_df_melt$mig_condition_name <- factor(fig_FF_df_melt$mig_condition_name, levels = c("high", "low", "none"), labels = c("High", "Low", "None"), ordered = TRUE)
 # fig_FF_df_melt$R0_condition_name <- factor(fig_FF_df_melt$R0_condition_name, levels = c("High", "Moderate", "Low"), labels = c("High (2)", "Moderate (1.5)", "Low (1)"), ordered = TRUE)
@@ -223,17 +224,17 @@ for (row in 1:nrow(fig_FF_df_bars_summary)){
 #### Plot Re over time ####
 # Choose which conditions to keep
 fig_FF_df_melt$keep <- 0
-fig_FF_df_melt[fig_FF_df_melt$strategy == "Mass-then-Maintain" & fig_FF_df_melt$vac_mass_frac_condition == 0.8, "keep"] <- 1
-# fig_FF_df_melt[fig_FF_df_melt$strategy == "Mass-then-Maintain" & fig_FF_df_melt$vac_mass_frac_condition == 0.4, "keep"] <- 1 # When using perfect vaccine
+fig_FF_df_melt[fig_FF_df_melt$strategy == "Mass and Maintain" & fig_FF_df_melt$vac_mass_frac_condition == 0.75, "keep"] <- 1
+# fig_FF_df_melt[fig_FF_df_melt$strategy == "Mass and Maintain" & fig_FF_df_melt$vac_mass_frac_condition == 0.4, "keep"] <- 1 # When using perfect vaccine
 fig_FF_df_melt[fig_FF_df_melt$strategy == "Mass Vaccination" & fig_FF_df_melt$vac_mass_frac_condition %in% c(1), "keep"] <- 1
 # fig_FF_df_melt[fig_FF_df_melt$strategy == "Mass Vaccination" & fig_FF_df_melt$vac_mass_frac_condition %in% c(0.4), "keep"] <- 1 # When using perfect vaccine
 fig_FF_df_melt[fig_FF_df_melt$strategy == "Routine Vaccination" , "keep"] <- 1
 
 # Set y-values for the bars for these conditions
 fig_FF_df_bars$y = NA
-fig_FF_df_bars[fig_FF_df_bars$strategy == "Mass-then-Maintain" & fig_FF_df_bars$vac_mass_frac_condition == 0.8 & fig_FF_df_bars$vac_routine_count_condition == 8, "y"] <- 0.5
-fig_FF_df_bars[fig_FF_df_bars$strategy == "Mass-then-Maintain" & fig_FF_df_bars$vac_mass_frac_condition == 0.8 & fig_FF_df_bars$vac_routine_count_condition == 12, "y"] <- 0.4
-fig_FF_df_bars[fig_FF_df_bars$strategy == "Mass-then-Maintain" & fig_FF_df_bars$vac_mass_frac_condition == 0.8 & fig_FF_df_bars$vac_routine_count_condition == 16, "y"] <- 0.3
+fig_FF_df_bars[fig_FF_df_bars$strategy == "Mass and Maintain" & fig_FF_df_bars$vac_mass_frac_condition == 0.75 & fig_FF_df_bars$vac_routine_count_condition == 8, "y"] <- 0.5
+fig_FF_df_bars[fig_FF_df_bars$strategy == "Mass and Maintain" & fig_FF_df_bars$vac_mass_frac_condition == 0.75 & fig_FF_df_bars$vac_routine_count_condition == 12, "y"] <- 0.4
+fig_FF_df_bars[fig_FF_df_bars$strategy == "Mass and Maintain" & fig_FF_df_bars$vac_mass_frac_condition == 0.75 & fig_FF_df_bars$vac_routine_count_condition == 16, "y"] <- 0.3
 
 fig_FF_df_bars[fig_FF_df_bars$strategy == "Mass Vaccination" & fig_FF_df_bars$vac_mass_frac_condition == 1 & fig_FF_df_bars$vac_mass_freq_condition == 730, "y"] <- 0.5
 fig_FF_df_bars[fig_FF_df_bars$strategy == "Mass Vaccination" & fig_FF_df_bars$vac_mass_frac_condition == 1 & fig_FF_df_bars$vac_mass_freq_condition == 365, "y"] <- 0.4
@@ -251,13 +252,13 @@ ggsave(file = "figures/Figure_FF.pdf", width = 5, height = 3, units = "in")
 
 # #### Plot Re over time (best of each) ####
 # fig_FF_df_melt$best <- 0
-# fig_FF_df_melt[fig_FF_df_melt$strategy == "Mass-then-Maintain" & fig_FF_df_melt$vac_mass_frac_condition == 0.8 & fig_FF_df_melt$vac_routine_count_condition == 12, "best"] <- 1
+# fig_FF_df_melt[fig_FF_df_melt$strategy == "Mass and Maintain" & fig_FF_df_melt$vac_mass_frac_condition == 0.8 & fig_FF_df_melt$vac_routine_count_condition == 12, "best"] <- 1
 # fig_FF_df_melt[fig_FF_df_melt$strategy == "Mass Vaccination" & fig_FF_df_melt$vac_mass_frac_condition == 1 & fig_FF_df_melt$vac_mass_freq_condition == 365, "best"] <- 1
 # fig_FF_df_melt[fig_FF_df_melt$strategy == "Routine Vaccination" & fig_FF_df_melt$vac_routine_count_condition == 12, "best"] <- 1
 # 
 # fig_FF_df_bars$y = NA
 # fig_FF_df_bars[fig_FF_df_bars$strategy == "Mass Vaccination" & fig_FF_df_bars$vac_mass_frac_condition == 1 & fig_FF_df_bars$vac_mass_freq_condition == 365, "y"] = 0.6
-# fig_FF_df_bars[fig_FF_df_bars$strategy == "Mass-then-Maintain" & fig_FF_df_bars$vac_mass_frac_condition == 0.8 & fig_FF_df_bars$vac_routine_count_condition == 12, "y"] = 0.5
+# fig_FF_df_bars[fig_FF_df_bars$strategy == "Mass and Maintain" & fig_FF_df_bars$vac_mass_frac_condition == 0.8 & fig_FF_df_bars$vac_routine_count_condition == 12, "y"] = 0.5
 # fig_FF_df_bars[fig_FF_df_bars$strategy == "Routine Vaccination" & fig_FF_df_bars$vac_routine_count_condition == 12, "y"] = 0.4
 # 
 # ggplot(fig_FF_df_melt[fig_FF_df_melt$best == 1,], aes(x = times/365, y = Re, color = factor(strategy))) + geom_hline(yintercept = 1, col = "darkgrey") + geom_line() + xlab("Years") + ylab("Effective Reproductive Number") + theme_bw() + ylim(0,2) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6)) + scale_color_discrete(name = "Strategy") + geom_segment(data = fig_FF_df_bars, aes(x = t_start/365, xend = t_end/365, y = y, yend = y, color = factor(strategy)))
