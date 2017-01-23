@@ -117,9 +117,14 @@ fig_AA_df_melt$birth_death_rate_condition_name <- factor(fig_AA_df_melt$birth_de
 
 #### Plot X(t) ####
 # The no-birth, no-mig line shows the vaccine waning profile.
-ggplot(fig_AA_df_melt[fig_AA_df_melt$birth_death_rate_condition_name == "None" & fig_AA_df_melt$VE_condition_name %in% c("Whole Cell\n(eg Shanchol)", "Perfect Vaccine"),], aes(x = times/365, y = Re, linetype = mig_condition_name)) + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years since Mass Vaccination") + ylab("X(t)") + theme_bw()  + scale_linetype_manual(name = "In/Out Migration Rate", values = c("solid", "longdash", "dotted")) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
+fig_AA_df_melt$VE_condition_name <- factor(fig_AA_df_melt$VE_condition_name, levels = c("Whole Cell\n(eg Shanchol)", "BS-Whole Cell\n(eg Dukoral)", "Perfect Vaccine"), labels = c("Whole Cell\n(eg Shanchol)", "kOCV", "Perfect Vaccine"), ordered = TRUE)
+
+ggplot(fig_AA_df_melt[fig_AA_df_melt$birth_death_rate_condition_name == "None" & fig_AA_df_melt$VE_condition_name %in% c("kOCV", "Perfect Vaccine"),], aes(x = times/365, y = Re, linetype = mig_condition_name)) + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years since Mass Vaccination") + ylab("X(t)") + theme_bw()  + scale_linetype_manual(name = "In/Out Migration Rate", values = c("solid", "longdash", "dotted")) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
 
 ggsave(file = "figures/Figure_AA.pdf", width = 5, height = 3, units = "in")
+
+fig_AA_df_melt$VE_condition_name <- factor(fig_AA_df_melt$VE_condition_name, levels = c("Whole Cell\n(eg Shanchol)", "kOCV", "Perfect Vaccine"), labels = c("Whole Cell\n(eg Shanchol)", "BS-Whole Cell\n(eg Dukoral)", "Perfect Vaccine"), ordered = TRUE)
+
 
 #### Plot X(t) completely for supplement ####
 # The no-birth, no-mig line shows the vaccine waning profile.
@@ -134,6 +139,12 @@ fig_AA_df_melt[fig_AA_df_melt$VE_condition_name == "Whole Cell\n(eg Shanchol)" &
 
 # High mobility, Shanchol
 fig_AA_df_melt[fig_AA_df_melt$VE_condition_name == "Whole Cell\n(eg Shanchol)" & fig_AA_df_melt$birth_death_rate_condition_name == "None" & fig_AA_df_melt$mig_condition_name == "High" & fig_AA_df_melt$Re > 0.99,"times"][1]/365
+
+# No mobility, Dukoral
+fig_AA_df_melt[fig_AA_df_melt$VE_condition_name == "BS-Whole Cell\n(eg Dukoral)" & fig_AA_df_melt$birth_death_rate_condition_name == "None" & fig_AA_df_melt$mig_condition_name == "None" & fig_AA_df_melt$Re > 0.99,"times"][1]/365
+
+# High mobility, Dukoral
+fig_AA_df_melt[fig_AA_df_melt$VE_condition_name == "BS-Whole Cell\n(eg Dukoral)" & fig_AA_df_melt$birth_death_rate_condition_name == "None" & fig_AA_df_melt$mig_condition_name == "High" & fig_AA_df_melt$Re > 0.99,"times"][1]/365
 
 # High mobility, Perfect vaccine
 fig_AA_df_melt[fig_AA_df_melt$VE_condition_name == "Perfect Vaccine" & fig_AA_df_melt$birth_death_rate_condition_name == "None" & fig_AA_df_melt$mig_condition_name == "High" & fig_AA_df_melt$Re > 0.99,"times"][1]/365
