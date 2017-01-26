@@ -1,6 +1,6 @@
 #### Function to perform revaccination ####
 
-revaccination <- function(t, N, S, V.states.vector, Vax, vac_routine_count, vac_mass_freq, vac_mass_frac, vac_mig_frac, vac_recip, vac_max, birth_rate, mig_in, vac_birth_frac, vac_stopper=1e20){
+revaccination <- function(t, N, S, V.states.vector, Vax, vac_routine_count, vac_mass_freq, vac_mass_frac, vac_mig_frac, vac_recip, vac_max, birth_rate, mig_in, vac_birth_frac, vac_stopper=1e20, revaccination_log_trans = TRUE){
   # In the ODE, the entire compartment cannot move at once, so the vaccine fraction needs to be reduced
   if(vac_mass_frac > 0.99){vac_mass_frac <- 0.99}
   
@@ -94,6 +94,13 @@ revaccination <- function(t, N, S, V.states.vector, Vax, vac_routine_count, vac_
   mass_S_rate = as.numeric((S-routine_S) * -log(1-mass_S_frac, base = exp(1)))
   routine_V_rate = as.numeric(V.states.vector * sapply(routine_V_frac, function(x) -log(1-x, base = exp(1))))
   mass_V_rate = as.numeric((V.states.vector-routine_V) * sapply(mass_V_frac, function(x) -log(1-x, base = exp(1))))
+  
+  if (revaccination_log_trans == FALSE){ # Remove the log transformation of the rates
+    routine_S_rate <- routine_S
+    routine_V_rate <- routine_V
+    mass_S_rate <- mass_S
+    mass_V_rate <- mass_V
+  }
   
   # cat(routine_V_rate, "\n") # Troubleshoot
   return(list(routine_S = routine_S,

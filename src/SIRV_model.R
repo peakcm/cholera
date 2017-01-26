@@ -35,7 +35,11 @@ SIRV.generic <- function(t,
   lambda <- as.numeric(params$beta * I/N * beta_t_fcn(t, params$beta_shape, params$beta_amp, params$beta_phase_shift))
   
   ## revaccination
-  revax_out <- revaccination(t = t, N = N, S = S, V.states.vector =  V.states.vector, Vax =  Vax, vac_routine_count = params$vac_routine_count, vac_mass_freq =  params$vac_mass_freq, vac_mass_frac = params$vac_mass_frac, vac_mig_frac = params$vac_mig_frac, vac_recip = params$vac_recip, vac_max = params$vac_max, birth_rate = params$birth_death_rate, mig_in = params$mig_in, vac_birth_frac = params$vac_birth_frac, vac_stopper = params$vac_stopper)
+  if ("revaccination_log_trans" %in% names(params)){ # Added this feature much later, so this check will make sure it only applies when I define it.
+    revax_out <- revaccination(t = t, N = N, S = S, V.states.vector =  V.states.vector, Vax =  Vax, vac_routine_count = params$vac_routine_count, vac_mass_freq =  params$vac_mass_freq, vac_mass_frac = params$vac_mass_frac, vac_mig_frac = params$vac_mig_frac, vac_recip = params$vac_recip, vac_max = params$vac_max, birth_rate = params$birth_death_rate, mig_in = params$mig_in, vac_birth_frac = params$vac_birth_frac, vac_stopper = params$vac_stopper, revaccination_log_trans = params$revaccination_log_trans)
+  } else {
+    revax_out <- revaccination(t = t, N = N, S = S, V.states.vector =  V.states.vector, Vax =  Vax, vac_routine_count = params$vac_routine_count, vac_mass_freq =  params$vac_mass_freq, vac_mass_frac = params$vac_mass_frac, vac_mig_frac = params$vac_mig_frac, vac_recip = params$vac_recip, vac_max = params$vac_max, birth_rate = params$birth_death_rate, mig_in = params$mig_in, vac_birth_frac = params$vac_birth_frac, vac_stopper = params$vac_stopper)
+    }
   
   ## Update migration rates
   if (params$mig_rates_constant == TRUE){
