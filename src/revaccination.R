@@ -41,7 +41,7 @@ revaccination <- function(t, N, S, V.states.vector, Vax, vac_routine_count, vac_
     
     # Give third priority to routine vaccination of susceptible people
     if (vax_rem > 0 && ("routine_all" %in% vac_recip | "routine_S" %in% vac_recip) && S > 1){
-      routine_S <- min(S-1, as.numeric(vac_routine_count)) # Remove one S so that the fraction is never 1
+      routine_S <- min(max(0,S-1), as.numeric(vac_routine_count)) # Remove one S so that the fraction is never 1
       vax_rem <- vax_rem - routine_S
       vac_routine_count <- vac_routine_count - routine_S
     }
