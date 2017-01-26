@@ -16,7 +16,7 @@ source("src/prob_outbreak_fcn.R")
 require(ggplot2)
 
 #### Test Example ####
-N = 100000
+N = 1000 
 n_v <- 100
 revaccination(t = 10,
               N = N,
@@ -102,7 +102,7 @@ VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Perfect",bo
 
 N_pop = N
 init_frac = 0
-years = 20/365
+years = 15/365
 times <- seq(0,356*years)
 
 params <- list(beta=1.5/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
@@ -122,7 +122,7 @@ params <- list(beta=1.5/2,                # Daily transmission parameter. From G
                V_step=V_comps_per_month/3000.5, # Average time in each vaccine compartment is one month
                vac_routine_count = 0,          # Fraction of the current S pop that is vaccinated on each day
                vac_mass_freq = vac_mass_freq,         # Days between mass re-vaccination campaigns
-               vac_mass_frac = df[75,"n_v"]/N,           # Fraction of the population revaccinated during mass revaccination campaigns
+               vac_mass_frac = .75,           # Fraction of the population revaccinated during mass revaccination campaigns
                vac_birth_frac = 0,            # Fraction of babies vaccinated
                vac_mig_frac = 0,            # Fraction of immigrants vaccinated upon arrival
                vac_max = 1e20,                 # Maximum number of vaccines to be given
@@ -142,7 +142,8 @@ plot(output$S, type = "l")
 output[10, "S"] - output[12, "S"]
 
 #### Run model as a loop through all df conditions ####
-for (row in 86:nrow(df)){
+# Note that errors arise for unknown reasons when the fraction to vaccination is between 0.75 and 0.99. Depends on what the N size is.... very odd....
+for (row in 1:nrow(df)){
   params <- list(beta=1.5/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
                  beta_shape = "constant",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
                  beta_amp = 0.00,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
@@ -181,6 +182,14 @@ for (row in 86:nrow(df)){
   cat(".")
 }
 
-ggplot(df, aes(x = n_v/N, y = S_moved/N, lty = log_trans)) + geom_line() +
+df$log_trans <- factor(df$log_trans, levels = c(TRUE, FALSE), ordered = TRUE)
+ggplot(df, aes(x = n_v/N, y = S_moved/N, lty = log_trans)) + 
+  theme_classic() +
+  stat_smooth(color = "black") +
   xlab("Desired Population Fraction to Vaccinate") +
-  ylab("Actual Population Fraction Vaccinated")
+  ylab("Actual Population Fraction Vaccinated") +
+  scale_linetype(name = "Logarithmic\nAdjustment") +
+  coord_fixed(1) +
+  theme(legend.justification=c(1,0), legend.position=c(1,.1))
+
+ggsave(file = "figures/Figure_II.pdf", width = 4, height = 4, units = "in")
