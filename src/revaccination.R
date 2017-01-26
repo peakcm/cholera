@@ -4,7 +4,7 @@ revaccination <- function(t, N, S, V.states.vector, Vax, vac_routine_count, vac_
   # In the ODE, the entire compartment cannot move at once, so the vaccine fraction needs to be reduced
   if(vac_mass_frac > 0.99){vac_mass_frac <- 0.99}
   
-  # cat( Vax, "\n") # Troubleshoot
+  # cat("Vax:", Vax, "\n") # Troubleshoot
   vax_rem <- vac_max - Vax
   if (vac_routine_count > vax_rem){
     vac_routine_count <- vax_rem
