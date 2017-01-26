@@ -63,7 +63,6 @@ ggplot(df) +
 
 ggsave(file = "figures/Figure_GG.pdf", width = 4, height = 3, units = "in")
 
-
 #### Run Observed simulation for Bentiu ####
 # Time elapses from 
 time_start <- as.numeric(as.Date("2014-06-01"))
@@ -72,10 +71,10 @@ times <- seq(0,time_end-time_start)
 
 # Calculate elements of VE
 max_V_months = 48
-V_comps_per_month = 0.5 # choose from 0.5, 1, 1.5, etc.
+V_comps_per_month = 1 # choose from 0.5, 1, 1.5, etc.
 
 n.comps.V = max_V_months*V_comps_per_month
-VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Shanchol",bound = TRUE,max_V_months = max_V_months)
+VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Dukoral",bound = TRUE,max_V_months = max_V_months)
 
 # Set migration rates
 knot_1 <- as.numeric(as.Date("2015-12-01")) - time_start
@@ -141,10 +140,22 @@ test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
 
 ggplot() + geom_line(data = test.run, aes(x = time, y = N)) + theme_bw() + xlab("Years") + ylab("N")
 
+# Measure proportion of people on Dec 31, 2016 who had ever received vaccine. 
+# Compare to 40% coverage estimate from survey
+1 - test.run[test.run$time == as.Date("2016-12-01"), "S"]/test.run[test.run$time == as.Date("2016-12-01"), "N"]
+
+# Calculate X(t) on Oct 16
+(X_Oct_16 <- 100*(test.run[test.run$time > "2016-10-16","Re"][1]))
+
+# Calculate probability of outbreak > 50 on oct 16
+R0 <- 1.5
+(Re_Oct_16 <- R0 * X_Oct_16/100)
+prob_outbreak_fcn(Re_Oct_16, 50)
+
 # Plot results
 ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
   geom_ribbon(aes(x = time, ymin = Re/(params$beta/params$gamma), ymax = 1), fill = "forestgreen", alpha = 0.5) +
-  theme_bw() + xlab("Date") + ylab("X(t)") + ylim(0.5,1) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=8), legend.text=element_text(size=8), legend.title=element_text(size=8))
+  theme_bw() + xlab("Date") + ylab("X(t)") + ylim(0,1) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=8), legend.text=element_text(size=8), legend.title=element_text(size=8))
 
 ggsave(file = "figures/Figure_GG_Xt.pdf", width = 4, height = 1.5, units = "in")
 
@@ -244,6 +255,9 @@ test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
 # Store with different R
 test.run$R0 <- params$beta/params$gamma
 
+# Calculate X(t) on Oct 16
+100*(test.run[test.run$time > "2016-10-16","Re"][1])
+
 # Plot results
 ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
   geom_ribbon(aes(x = time, ymin = Re/(params$beta/params$gamma), ymax = 1), fill = "forestgreen", alpha = 0.5) +
@@ -255,11 +269,7 @@ prob_outbreak_fcn(R = 1, outbreak_size = 50)
 
 ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax))) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-
-
-
 #### Run Counterfactual simulation for Bentiu with empirical VE(t) ####
-VE_counterfactual <- rep(max(VE), length(VE))
 base_rate_counterfactual <- 0
 mig_in_counterfactual <- 0
 mig_out_counterfactual <- 0
@@ -326,7 +336,8 @@ test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
 # Store with different R
 test.run$R0 <- params$beta/params$gamma
 
-test.run[test.run$time > "2016-10-16","Re"][1]
+# Calculate X(t) on Oct 16
+100*(test.run[test.run$time > "2016-10-16","Re"][1])
 
 # Plot results
 ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
@@ -334,9 +345,6 @@ ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(a
   theme_bw() + xlab("Date") + ylab("X(t)") + ylim(0,1) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=8), legend.text=element_text(size=8), legend.title=element_text(size=8))
 
 ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax))) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-
 
 #### Run Counterfactual simulation for Bentiu with empirical N(t) ####
 VE_counterfactual <- rep(max(VE), length(VE))
@@ -407,7 +415,8 @@ test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
 # Store with different R
 test.run$R0 <- params$beta/params$gamma
 
-test.run[test.run$time > "2016-10-16","Re"][1]
+# Calculate X(t) on Oct 16
+100*(test.run[test.run$time > "2016-10-16","Re"][1])
 
 # Plot results
 ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
@@ -487,7 +496,8 @@ test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
 # Store with different R
 test.run$R0 <- params$beta/params$gamma
 
-test.run[test.run$time > "2016-10-16","Re"][1]
+# Calculate X(t) on Oct 16
+100*(test.run[test.run$time > "2016-10-16","Re"][1])
 
 # Plot results
 ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
@@ -496,10 +506,7 @@ ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(a
 
 ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax))) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-
-
-
-#### Run Counterfactual simulation for Bentiu with only routine migration ####
+#### Run Counterfactual simulation for Bentiu with only resettlement migration ####
 params <- list(beta=1/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
                beta_shape = "constant",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
                beta_amp = 0.05,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
@@ -561,7 +568,8 @@ test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
 # Store with different R
 test.run$R0 <- params$beta/params$gamma
 
-test.run[test.run$time > "2016-10-16","Re"][1]
+# Calculate X(t) on Oct 16
+100*(test.run[test.run$time > "2016-10-16","Re"][1])
 
 # Plot results
 ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
@@ -580,24 +588,25 @@ sa.GT(df_cases$Cases, GT.type="gamma", GT.mean=seq(3,10,1), GT.sd.range=1, est.m
 mGT<-generation.time("gamma", c(5, 7.13))
 plot(mGT,xlim = c(0, 30))
 plot(cumsum(mGT$GT),xlim = c(1, 30), type = "b")
-output <- est.R0.TD(df_cases$Cases, mGT,nsim=1000, begin=1, end=31)
+output <- est.R0.TD(df_cases$Cases, mGT,nsim=1000, begin=1, end=86)
 plot(output)
 
 df_cases$R <- output$R
 df_cases$R_lower <- output$conf.int[,1]
 df_cases$R_upper <- output$conf.int[,2]
-df_cases$Date <- as.Date(as.character(df_cases$Date), format = "%m/%d/%y")
+# df_cases$Date <- as.Date(as.character(df_cases$Date), format = "%m/%d/%y")
 
 ggplot(df_cases, aes(x = Date)) +
   theme_bw() +
-  geom_bar(aes(y = Cases/5), stat = "identity") +
-  geom_hline(yintercept = 1, color = "red", lty = "longdash") +
-  geom_ribbon(aes(ymin = R_lower, ymax = R_upper), fill = "pink", alpha = 0.5) +
+  geom_bar(aes(y = Cases/5), stat = "identity", fill = "grey") +
+  geom_ribbon(aes(ymin = R_lower, ymax = R_upper), fill = "pink", alpha = 0.8) +
+  geom_hline(yintercept = 1, color = "darkgrey", lty = "longdash") +
   geom_line(aes( y = R), color = "darkred") +
-  # scale_y_continuous(name = expression(R["t"])) +
-  scale_y_continuous(name = "Daily Cholera Cases", breaks = c(0, 1, 2, 3, 4, 5), labels = c(0, 5, 10, 15, 20, 25), position = "right") +
+  scale_y_continuous(name = expression(R["t"]), breaks = c(0, 1, 2, 3, 4, 5, 6)) +
+  # scale_y_continuous(name = "Daily Cholera Cases", breaks = c(0, 1, 2, 3, 4, 5, 6), labels = c(0, 5, 10, 15, 20, 25, 30), position = "right") +
   scale_x_date(date_labels = "%b %d") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  theme(axis.text.x = element_text(angle = 55, hjust = 1))
 
 ggsave(file = "figures/Figure_GG_RtLeft.pdf", width = 4, height = 3, units = "in")
 ggsave(file = "figures/Figure_GG_RtRight.pdf", width = 4, height = 3, units = "in")
