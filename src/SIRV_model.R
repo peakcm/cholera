@@ -93,8 +93,9 @@ SIRV.generic <- function(t,
   
   ## Number of vaccine courses
   dVax <- +sum(revax_out$routine_S_rate, revax_out$routine_V_rate, revax_out$mass_S_rate, revax_out$mass_V_rate, revax_out$birth, revax_out$migrant)
-  
-  # cat(revax_out$routine_V_rate,"\n")
+  # cat("dVax:", dVax, "\n")
+  # cat("mass_S_rate:",revax_out$mass_S_rate,"\n")
+  # cat("dV.states:", dV.states, "\n")
 
   out  <- c(dS = dS,
             dV.states,
