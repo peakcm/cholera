@@ -15,6 +15,7 @@ source("src/Seasonality.R")
 source("src/prob_outbreak_fcn.R")
 source("src/SIRV_model.R")
 source("src/Run_SIRV_model.R")
+source("src/set_panel_size.R")
 require(ggplot2)
 require(data.table)
 
@@ -126,6 +127,17 @@ ggsave(file = "figures/Figure_AA.pdf", width = 5, height = 3, units = "in")
 fig_AA_df_melt$VE_condition_name <- factor(fig_AA_df_melt$VE_condition_name, levels = c("Whole Cell\n(eg Shanchol)", "kOCV", "Perfect Vaccine"), labels = c("Whole Cell\n(eg Shanchol)", "BS-Whole Cell\n(eg Dukoral)", "Perfect Vaccine"), ordered = TRUE)
 
 
+#### Plot X(t) for multi-paneled Figure JJ ####
+# The no-birth, no-mig line shows the vaccine waning profile.
+fig_AA_df_melt$VE_condition_name <- factor(fig_AA_df_melt$VE_condition_name, levels = c("Whole Cell\n(eg Shanchol)", "BS-Whole Cell\n(eg Dukoral)", "Perfect Vaccine"), labels = c("Whole Cell\n(eg Shanchol)", "kOCV", "Perfect Vaccine"), ordered = TRUE)
+
+jj <- ggplot(fig_AA_df_melt[fig_AA_df_melt$birth_death_rate_condition_name == "None" & fig_AA_df_melt$VE_condition_name %in% c("kOCV", "Perfect Vaccine"),], aes(x = times/365, y = Re, linetype = mig_condition_name)) + geom_line() + facet_grid(.~VE_condition_name) +  ylab("X(t)") + theme_bw()  + scale_linetype_manual(name = "In/Out Migration Rate", values = c("solid", "longdash", "dotted")) + theme(text = element_text(size=10), legend.text=element_text(size=10), legend.title=element_text(size=10)) + scale_x_continuous(labels = NULL, breaks = c(0,2,4,6,8,10), name = NULL) + theme(panel.grid.major = element_blank()) + theme(panel.grid.minor = element_blank())
+
+plot(set_panel_size(p = jj, g = ggplotGrob(jj), margin = unit(.25,"in"), width=unit(2.5, "in"), height=unit(2, "in")))
+set_panel_size(p = jj, g = ggplotGrob(jj), file = "figures/Figure_JJ_1.pdf", margin = unit(0.25,"in"), width=unit(2.5, "in"), height=unit(2, "in"))
+
+fig_AA_df_melt$VE_condition_name <- factor(fig_AA_df_melt$VE_condition_name, levels = c("Whole Cell\n(eg Shanchol)", "kOCV", "Perfect Vaccine"), labels = c("Whole Cell\n(eg Shanchol)", "BS-Whole Cell\n(eg Dukoral)", "Perfect Vaccine"), ordered = TRUE)
+
 #### Plot X(t) completely for supplement ####
 # The no-birth, no-mig line shows the vaccine waning profile.
 ggplot(fig_AA_df_melt, aes(x = times/365, y = Re, linetype = mig_condition_name, color = birth_death_rate_condition_name)) + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years since Mass Vaccination") + ylab("X(t)") + theme_bw() + scale_color_manual(values = c("black", "grey"), name = "Birth/Death Rate") + scale_linetype_manual(name = "In/Out Migration Rate", values = c("solid", "longdash", "dotted")) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
@@ -149,8 +161,5 @@ fig_AA_df_melt[fig_AA_df_melt$VE_condition_name == "BS-Whole Cell\n(eg Dukoral)"
 # High mobility, Perfect vaccine
 fig_AA_df_melt[fig_AA_df_melt$VE_condition_name == "Perfect Vaccine" & fig_AA_df_melt$birth_death_rate_condition_name == "None" & fig_AA_df_melt$mig_condition_name == "High" & fig_AA_df_melt$Re > 0.99,"times"][1]/365
 
-
 #### Save workspace ####
 save.image(file = "src/Figure_AA.RData")
-
-
