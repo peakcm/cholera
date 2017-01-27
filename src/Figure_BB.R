@@ -15,6 +15,7 @@ source("src/Seasonality.R")
 source("src/prob_outbreak_fcn.R")
 source("src/SIRV_model.R")
 source("src/Run_SIRV_model.R")
+source("src/set_panel_size.R")
 require(ggplot2)
 require(data.table)
 
@@ -135,6 +136,15 @@ fig_BB_df_melt$R0_condition_name <- factor(fig_BB_df_melt$R0_condition_name, lev
 #### Plot Re over time ####
 # The blue dotted line essentially shows the assume vaccine waning profile.
 ggplot(fig_BB_df_melt, aes(x = times/365, y = Re, linetype = mig_condition_name, color = R0_condition_name)) + geom_hline(yintercept =1, col = "darkgrey") + geom_line() + facet_grid(VE_condition_name ~.) + xlab("Years since Mass Vaccination") + ylab("Effective Reproductive Number") + theme_bw() + scale_color_discrete(name = "Basic Reproductive\nNumber") + scale_linetype_discrete(name = "In/Out Migration Rate") + ylim(0,2) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6))
+
+# Plot figure JJ_2
+fig_BB_df_melt_jj_2 <- fig_BB_df_melt
+fig_BB_df_melt_jj_2$VE_condition_name <- fig_BB_df_melt_jj_2$VE_condition_name <- factor(fig_BB_df_melt_jj_2$VE_condition_name, levels = c("Whole Cell\n(eg Shanchol)", "BS-Whole Cell\n(eg Dukoral)", "Perfect Vaccine"), labels = c("Whole Cell\n(eg Shanchol)", "kOCV", "Perfect Vaccine"), ordered = TRUE)
+
+jj_2 <- ggplot(fig_BB_df_melt_jj_2[fig_BB_df_melt_jj_2$VE_condition_name %in% c("kOCV", "Perfect Vaccine"),], aes(x = times/365, y = Re, linetype = mig_condition_name, color = R0_condition_name)) + geom_hline(yintercept =1, col = "darkgrey") + geom_line() + facet_grid(.~VE_condition_name) + xlab("Years since Mass Vaccination") + ylab(expression(paste("Effective Reproductive Number ",(R[e])))) + theme_bw() + scale_color_discrete(name = expression(paste("Basic Reproductive Number ",(R[0])))) + scale_linetype_discrete(name = "In/Out Migration Rate") + ylim(0,2) + theme(text = element_text(size=10), legend.text=element_text(size=10), legend.title=element_text(size=10)) + guides(lty = FALSE) + theme(panel.grid.major = element_blank()) + theme(panel.grid.minor = element_blank()) + scale_x_continuous(name = NULL, labels = NULL, breaks = c(0,2,4,6,8,10)) + theme(strip.background = element_blank(),strip.text.x = element_blank())
+
+plot(set_panel_size(p = jj_2, g = ggplotGrob(jj_2), margin = unit(.25,"in"), width=unit(2.5, "in"), height=unit(2, "in")))
+set_panel_size(p = jj_2, g = ggplotGrob(jj_2), file = "figures/Figure_JJ_2.pdf", margin = unit(0.25,"in"), width=unit(2.5, "in"), height=unit(2, "in"))
 
 #### Plot Prob of Outbreak ####
 # Add an indicator on each curve marking the loss of Herd Immunity
