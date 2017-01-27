@@ -159,6 +159,13 @@ ggsave(file = "figures/Figure_BB.pdf", width = 5, height = 3, units = "in")
 
 fig_BB_df_melt$VE_condition_name <- factor(fig_BB_df_melt$VE_condition_name, levels = c("Whole Cell\n(eg Shanchol)", "kOCV", "Perfect Vaccine"), labels = c("Whole Cell\n(eg Shanchol)", "BS-Whole Cell\n(eg Dukoral)", "Perfect Vaccine"), ordered = TRUE)
 
+# Plot figure JJ_3
+fig_BB_df_melt_jj_3 <- fig_BB_df_melt_jj_2
+
+jj_3 <- ggplot(fig_BB_df_melt_jj_3[fig_BB_df_melt_jj_3$VE_condition_name %in% c("kOCV", "Perfect Vaccine"),], aes(x = times/365, y = prob_outbreak_10, linetype = mig_condition_name, color = R0_condition_name)) + geom_line() + facet_grid(.~VE_condition_name) + xlab("Years since Mass Vaccination") + ylab("Probability one case\nsparks an outbreak (>10)") + theme_bw() + scale_color_discrete(name = expression(paste("Basic Reproductive Number ",(R[0])))) + scale_linetype_discrete(name = "In/Out Migration Rate") + ylim(0,1) + theme(text = element_text(size=10), legend.text=element_text(size=10), legend.title=element_text(size=10)) + guides(lty = FALSE, color = FALSE) + theme(panel.grid.major = element_blank()) + theme(panel.grid.minor = element_blank()) + scale_x_continuous(name = "Years since Mass Vaccination", breaks = c(0,2,4,6,8,10)) + theme(strip.background = element_blank(),strip.text.x = element_blank())
+
+plot(set_panel_size(p = jj_3, g = ggplotGrob(jj_3), margin = unit(.25,"in"), width=unit(2.5, "in"), height=unit(2, "in")))
+set_panel_size(p = jj_3, g = ggplotGrob(jj_3), file = "figures/Figure_JJ_3.pdf", margin = unit(0.25,"in"), width=unit(2.5, "in"), height=unit(2, "in"))
 
 #### Plot Prob of Outbreak for supplement ####
 # Add an indicator on each curve marking the loss of Herd Immunity
