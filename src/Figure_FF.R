@@ -169,7 +169,7 @@ for (row in 1:sims){
 }
 
 # Rename Factors
-fig_FF_df_melt$strategy <- factor(fig_FF_df_melt$strategy, levels = c("Mass", "Mass_Maintain", "Routine"), labels = c("Mass Vaccination", "Mass and Maintain", "Routine Vaccination"), ordered = TRUE)
+fig_FF_df_melt$strategy <- factor(fig_FF_df_melt$strategy, levels = c("Mass", "Routine", "Mass_Maintain"), labels = c("Mass Vaccination","Routine Vaccination", "Mass and Maintain"), ordered = TRUE)
 # fig_FF_df_melt$VE_condition_name <- factor(fig_FF_df_melt$VE_condition_name, levels = c("Shanchol", "Dukoral", "Perfect"), labels = c("Whole Cell\n(eg Shanchol)", "BS-Whole Cell\n(eg Dukoral)", "Perfect Vaccine"), ordered = TRUE)
 # fig_FF_df_melt$mig_condition_name <- factor(fig_FF_df_melt$mig_condition_name, levels = c("high", "low", "none"), labels = c("High", "Low", "None"), ordered = TRUE)
 # fig_FF_df_melt$R0_condition_name <- factor(fig_FF_df_melt$R0_condition_name, levels = c("High", "Moderate", "Low"), labels = c("High (2)", "Moderate (1.5)", "Low (1)"), ordered = TRUE)
@@ -244,11 +244,16 @@ fig_FF_df_bars[fig_FF_df_bars$strategy == "Routine Vaccination" & fig_FF_df_bars
 fig_FF_df_bars[fig_FF_df_bars$strategy == "Routine Vaccination" & fig_FF_df_bars$vac_routine_count_condition == 16 , "y"] <- 0.3
 
 # Plot
-ggplot(fig_FF_df_melt[fig_FF_df_melt$keep == 1,], aes(x = times/365, y = Re, color = factor(vac_routine_count_condition), linetype = factor(1-vac_mass_freq_condition))) + geom_hline(yintercept = 1, col = "darkgrey") + geom_line() + facet_grid(strategy ~.) + xlab("Years") + ylab("Effective Reproductive Number") + theme_bw() + ylim(0,2) + theme(text = element_text(size=6), legend.text=element_text(size=6), legend.title=element_text(size=6)) + scale_color_discrete(name = "Routine Vaccine\nCourses per Day") + scale_linetype_manual("Mass Vaccination Frequency", values = c("dotted", "longdash", "solid"), labels = c("2 Years", "1 Year", "N/A")) + guides(linetype = guide_legend(order = 1), color = guide_legend(order = 2)) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  geom_segment(data = fig_FF_df_bars, aes(x = t_start/365, xend = t_end/365, y = y, yend = y, color = factor(vac_routine_count_condition)), linetype = "solid", alpha = 0.5) + 
-  geom_text(data = fig_FF_df_bars, aes(x = t_end/365+.5, y = y, label = DHI_group), size = 1.5, alpha = 0.5)
+fig_FF_df_melt_keep <- fig_FF_df_melt[fig_FF_df_melt$keep == 1,]
+fig_FF_df_melt_keep$strategy <- factor(fig_FF_df_melt_keep$strategy, levels = c("Mass Vaccination","Routine Vaccination", "Mass and Maintain"), labels = c("Mass Vaccination","Routine Vaccination", "Mass and Maintain"), ordered = TRUE)
 
-ggsave(file = "figures/Figure_FF.pdf", width = 5, height = 3, units = "in")
+fig_FF_df_bars$strategy <- factor(fig_FF_df_bars$strategy, levels = c("Mass Vaccination","Routine Vaccination", "Mass and Maintain"), ordered = TRUE)
+
+ggplot(fig_FF_df_melt_keep, aes(x = times/365, y = Re, color = factor(vac_routine_count_condition), linetype = factor(1-vac_mass_freq_condition))) + geom_hline(yintercept = 1, col = "darkgrey") + geom_line() + facet_grid(strategy ~.) + xlab("Years") + ylab("Effective Reproductive Number") + theme_bw() + ylim(0,2) + theme(text = element_text(size=10), legend.text=element_text(size=10), legend.title=element_text(size=10)) + scale_color_discrete(name = "Routine Vaccine\nCourses per Day") + scale_linetype_manual("Mass Vaccination Frequency", values = c("dotted", "longdash", "solid"), labels = c("2 Years", "1 Year", "N/A")) + guides(linetype = guide_legend(order = 1), color = guide_legend(order = 2)) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  geom_segment(data = fig_FF_df_bars, aes(x = t_start/365, xend = t_end/365, y = y, yend = y, color = factor(vac_routine_count_condition)), linetype = "solid", alpha = 0.5) + 
+  geom_text(data = fig_FF_df_bars, aes(x = t_end/365+.5, y = y, label = DHI_group), size = 2, alpha = 0.5)
+
+ggsave(file = "figures/Figure_FF.pdf", width = 7, height = 4, units = "in")
 
 # #### Plot Re over time (best of each) ####
 # fig_FF_df_melt$best <- 0
