@@ -167,6 +167,26 @@ jj_3 <- ggplot(fig_BB_df_melt_jj_3[fig_BB_df_melt_jj_3$VE_condition_name %in% c(
 plot(set_panel_size(p = jj_3, g = ggplotGrob(jj_3), margin = unit(.25,"in"), width=unit(2.5, "in"), height=unit(2, "in")))
 set_panel_size(p = jj_3, g = ggplotGrob(jj_3), file = "figures/Figure_JJ_3.pdf", margin = unit(0.25,"in"), width=unit(2.5, "in"), height=unit(2, "in"))
 
+#### Calculate DHI for each condition ####
+# kOCV, High mobility, High R0
+fig_BB_df_melt_jj_2[fig_BB_df_melt_jj_2$Re > 1 & fig_BB_df_melt_jj_2$VE_condition_name == "kOCV" & fig_BB_df_melt_jj_2$mig_condition_name == "High" & fig_BB_df_melt_jj_2$R0_condition_name == "High (2)",][1,"times"]/365
+# kOCV, High mobility, Medium R0
+fig_BB_df_melt_jj_2[fig_BB_df_melt_jj_2$Re > 1 & fig_BB_df_melt_jj_2$VE_condition_name == "kOCV" & fig_BB_df_melt_jj_2$mig_condition_name == "High" & fig_BB_df_melt_jj_2$R0_condition_name == "Moderate (1.5)",][1,"times"]/365
+# kOCV, High mobility, Low R0
+fig_BB_df_melt_jj_2[fig_BB_df_melt_jj_2$Re > 0.99 & fig_BB_df_melt_jj_2$VE_condition_name == "kOCV" & fig_BB_df_melt_jj_2$mig_condition_name == "High" & fig_BB_df_melt_jj_2$R0_condition_name == "Low (1)",][1,"times"]/365
+
+# kOCV, Low mobility, High R0
+fig_BB_df_melt_jj_2[fig_BB_df_melt_jj_2$Re > 1 & fig_BB_df_melt_jj_2$VE_condition_name == "kOCV" & fig_BB_df_melt_jj_2$mig_condition_name == "Low" & fig_BB_df_melt_jj_2$R0_condition_name == "High (2)",][1,"times"]/365
+# kOCV, Low mobility, Medium R0
+fig_BB_df_melt_jj_2[fig_BB_df_melt_jj_2$Re > 1 & fig_BB_df_melt_jj_2$VE_condition_name == "kOCV" & fig_BB_df_melt_jj_2$mig_condition_name == "Low" & fig_BB_df_melt_jj_2$R0_condition_name == "Moderate (1.5)",][1,"times"]/365
+# kOCV, Low mobility, Low R0
+fig_BB_df_melt_jj_2[fig_BB_df_melt_jj_2$Re > 0.99 & fig_BB_df_melt_jj_2$VE_condition_name == "kOCV" & fig_BB_df_melt_jj_2$mig_condition_name == "Low" & fig_BB_df_melt_jj_2$R0_condition_name == "Low (1)",][1,"times"]/365
+
+# When does the outbreak probability in a high mobility, high R0 setting exceed 0.5
+fig_BB_df_melt_jj_2[fig_BB_df_melt_jj_2$prob_outbreak_10 > 0.50 & fig_BB_df_melt_jj_2$VE_condition_name == "kOCV" & fig_BB_df_melt_jj_2$mig_condition_name == "High" & fig_BB_df_melt_jj_2$R0_condition_name == "High (2)",][1,"times"]/365
+
+
+
 #### Plot Prob of Outbreak for supplement ####
 # Add an indicator on each curve marking the loss of Herd Immunity
 # Alternatively, since the y=0.246 line is Re = 1, just draw a line
