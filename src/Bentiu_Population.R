@@ -36,7 +36,7 @@ for (i in 1:nrow(df_cases)){
 }
 
 #### Create rectangle ####
-df_rect <- data.frame(xmin = as.Date("2016-10-01"), xmax = as.Date("2016-12-01"), ymin = 0, ymax = 50000)
+df_rect <- data.frame(xmin = as.Date("2016-09-01"), xmax = as.Date("2017-02-01"), ymin = -0, ymax = 75000)
 
 #### Add fluxes ####
 df$influx <- df$pop + df$Entries
@@ -45,21 +45,23 @@ df$outflux <- df$pop - df$Exits
 
 #### Plot Pop size, vaccines, and cases ####
 ggplot(df) + 
-  # geom_rect(data = df_rect, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), fill = "white", color = "black") +
+  geom_rect(data = df_rect, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), fill = "white", color = "black") +
   # geom_bar(data = df_cases, aes(x = Date, y = Cases_weekly*500), stat = "identity", width = 2) + 
-  geom_bar(aes(x = Date, y = Cholera.cases*1000), stat = "identity", fill = "lightgrey") + 
-  geom_text(aes(x = Date, y = (Cholera.cases*1000), label = paste(Cholera.cases, "\nCases")), size = 2) + 
+  geom_bar(aes(x = Date, y = Cholera.cases*150), stat = "identity", fill = "lightgrey") + 
+  geom_rect(data = df_rect, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), fill = NA, color = "black") +
+  geom_text(aes(x = Date, y = (Cholera.cases*150), label = paste(Cholera.cases)), size = 2) + 
   geom_ribbon(data = df[is.na(df$influx)==0,], aes(x = Date, ymin = pop, ymax = influx), fill = "lightgreen") +
   geom_ribbon(data = df[is.na(df$outflux)==0,], aes(x = Date, ymin = outflux, ymax = pop), fill = "pink") +
   geom_line(aes(x = Date, y = pop), color = "darkblue") +
   geom_bar(data = df[is.na(df$Vaccine.Doses)==0,], aes(x = Date, y = Vaccine.Doses/2), stat = "identity", width = 6, color = "forestgreen", alpha = .6) +
-  geom_text(data = df[is.na(df$Vaccine.Doses)==0,], aes(x = (Date + 90), y = (Vaccine.Doses/2 - 2000), label = paste(Vaccine.Doses, "\nDoses")), color = "forestgreen", size = 2) +
-  scale_y_continuous(breaks = c(0, 5e4, 1e5, 1.5e5), labels = c("0", "50", "100", "150"), name = "Population (thousands)") +
+  geom_text(data = df[is.na(df$Vaccine.Doses)==0,], aes(x = (Date + 70), y = (Vaccine.Doses/2 - 2000), label = paste(Vaccine.Doses, "\nDoses")), color = "forestgreen", size = 2) +
+  scale_y_continuous(limits = c(0, 1.5e5), breaks = c(0, 5e4, 1e5, 1.5e5), labels = c("0", "50", "100", "150"), name = "Population (thousands)") +
   theme_bw() +
-  theme(text = element_text(size = 8), axis.text.x = element_text(size = 8), axis.text.y = element_text(size = 8))  +
-  scale_x_date(date_labels = "%b '%y") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle("Bentiu PoC Camp")
+  theme( panel.grid.minor = element_blank()) +
+  theme(text = element_text(size = 10), axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10))  +
+  scale_x_date(date_labels = "%b %Y") + 
+  # ggtitle("Bentiu PoC Camp") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
 
 ggsave(file = "figures/Figure_GG.pdf", width = 4, height = 3, units = "in")
 
@@ -152,17 +154,8 @@ R0 <- 1.5
 (Re_Oct_16 <- R0 * X_Oct_16/100)
 prob_outbreak_fcn(Re_Oct_16, 50)
 
-# Plot results
-ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
-  geom_ribbon(aes(x = time, ymin = Re/(params$beta/params$gamma), ymax = 1), fill = "forestgreen", alpha = 0.5) +
-  theme_bw() + xlab("Date") + ylab("X(t)") + ylim(0,1) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=8), legend.text=element_text(size=8), legend.title=element_text(size=8))
-
-ggsave(file = "figures/Figure_GG_Xt.pdf", width = 4, height = 1.5, units = "in")
-
 ggplot(test.run, aes(x = time, y = Re)) + geom_line() + geom_hline(yintercept=1, col="red") + 
   theme_bw() + xlab("Date") + ylab("R Effective") +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-ggplot(test.run, aes(x = time, y = prob_outbreak_50)) + geom_line() + theme_bw() + xlab("Date") + ylab("Probability of\nan Outbreak (>50)") + scale_y_continuous(limits = c(0,1))+  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggplot(test.run, aes(x = time)) +
   geom_line(aes(y=V_total), col="black", lty="dashed") +
@@ -173,6 +166,37 @@ ggplot(test.run, aes(x = time)) +
   theme_bw() + xlab("Date") + ylab("Number of People\nNote: 'I' are scaled by 10") +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax))) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+#### Plot probability of an outbreak over time ####
+df_prob_outbreak <- data.frame(time = rep(test.run$time, 4), X_t = rep(test.run$Re,4), R_0 = rep(c(1, 1.5, 1.75, 2), each = nrow(test.run)), prob_outbreak_10 = NA)
+df_prob_outbreak$prob_outbreak_10 <- prob_outbreak_fcn(R = df_prob_outbreak$X_t * df_prob_outbreak$R_0)
+
+df_prob_outbreak$R_0 <- factor(df_prob_outbreak$R_0, levels = c(2, 1.75, 1.5, 1), ordered = TRUE)
+
+# 3 main ggplot colors 
+colors = c("#F8766D99", "black", "#00BA3899", "#619CFF99")
+
+ggplot(df_prob_outbreak, aes(x = time, y = prob_outbreak_10, color = R_0)) + 
+  geom_line() + 
+  theme_bw() +
+  xlab("Date") + 
+  scale_y_continuous(limits = c(0,1), name = "Outbreak\nProbability") +
+  scale_color_manual(values = colors, name = "Basic Reproductive\nNumber") +
+  geom_line(data = df_prob_outbreak[df_prob_outbreak$R_0 %in% c("1.75"),], aes(x = time, y = prob_outbreak_10), color = "black", size = .7) +
+  guides(color = FALSE) +
+  scale_x_date(date_labels = "%b '%y") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme(text = element_text(size=10), legend.text=element_text(size=10), legend.title=element_text(size=10)) +
+  theme(panel.grid.minor = element_blank())
+
+ggsave(file = "figures/Figure_GG_prob.pdf", width = 4, height = 1.5, units = "in")
+
+#### Plot X(t) over time ####
+ggplot(test.run, aes(x = time, y = Re/(params$beta/params$gamma))) + geom_line(alpha = 0.5) + 
+  geom_ribbon(aes(x = time, ymin = Re/(params$beta/params$gamma), ymax = 1), fill = "forestgreen", alpha = 0.5) +
+  theme_bw() + xlab("Date") + ylab("X(t)") + ylim(0,1) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=10), legend.text=element_text(size=10), legend.title=element_text(size=10))
+
+ggsave(file = "figures/Figure_GG_Xt.pdf", width = 4, height = 1.5, units = "in")
 
 #### Plot Pop size and simulated Pop size ####
 ggplot(df) + 
@@ -613,6 +637,9 @@ ggsave(file = "figures/Figure_GG_RtRight.pdf", width = 4, height = 3, units = "i
 
 #uses multiple methods
 output2 <- estimate.R(df_cases$Cases, mGT, methods=c("EG", "ML", "TD", "AR", "SB"), pop.size=100000, begin=1, end=31, nsim=1000)
+
+output2$estimates$ML # ML estimate
+
 plot(output2)
 output2
 
