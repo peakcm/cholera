@@ -13,9 +13,11 @@ source("src/calculate_Re.R")
 source("src/calculate_VE.R")
 source("src/Seasonality.R")
 source("src/prob_outbreak_fcn.R")
+source("src/migration_rate_calculator.R")
 source("src/SIRV_model.R")
 source("src/Run_SIRV_model.R")
 source("src/set_panel_size.R")
+source("src/revaccination.R")
 require(ggplot2)
 require(data.table)
 
@@ -61,19 +63,22 @@ for (row in seq_len(sims)){
                  gamma=1/2,                     # Duration of disease
                  sigma=1/1.4,                   # Incubation period
                  birth_death_rate=fig_AA_df$birth_death_rate_condition[row], # Average birth and death rate
-                 nat_wane=0*1/(365*10),         # Rate of natural immunity waning
+                 nat_wane=0,         # Rate of natural immunity waning
+                 mig_rates_constant = TRUE,      # TRUE if migration rates are constant
                  mig_in= fig_AA_df$mig_condition[row],             # Rate of immigration
                  mig_out=fig_AA_df$mig_condition[row],             # Rate of emigration
                  foreign_infection=0.00,        # Proportion of immigrants who are infected
                  n.comps.V=n.comps.V,           # Number of V compartments
                  VE=fig_AA_df$VE_condition[row][[1]],                         # Vaccine efficacy over time
                  V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
-                 vac_routine_freq = 0,          # Days between routine re-vaccination campaigns
-                 vac_routine_frac = 0,          # Fraction of the population revaccinated during routine revaccination campaigns
+                 vac_routine_count = 0,        # Number of courses given each day
+                 vac_mass_freq = 0,         # Days between mass re-vaccination campaigns
+                 vac_mass_frac = 0,           # Fraction of the population revaccinated during mass revaccination campaigns
                  vac_birth_frac = 0,            # Fraction of babies vaccinated
                  vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
                  vac_max = 5e50,                # Maximum number of vaccines to be given
-                 vac_recip = c("all")  # Recipients of vaccination ("all", "S", "migrant", "birth")
+                 vac_recip = c("all"),  # Recipients of vaccination ("all", "S", "migrant", "birth")
+                 vac_stopper = 1e20      # Don't vaccinate after this day
   )
   inits = rep(0, 7+params$n.comps.V)
   inits[1] = 0000 # initially susceptible
