@@ -101,11 +101,11 @@ params <- list(beta=1/2,                # Daily transmission parameter. From Gui
                VE=VE,                         # Vaccine efficacy over time
                V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
                vac_routine_count = 0,        # Number of courses given each day
-               vac_mass_freq = floor(365*11/12),         # Days between mass re-vaccination campaigns
+               vac_mass_freq = floor(365*12/12),         # Days between mass re-vaccination campaigns
                vac_mass_frac = 0.9,           # Fraction of the population revaccinated during mass revaccination campaigns
                vac_birth_frac = 0,            # Fraction of babies vaccinated
                vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
-               vac_max = 174288,                 # Maximum number of vaccine courses to be given
+               vac_max = 113073,                 # Maximum number of vaccine courses to be given
                vac_recip = c("mass_all"),     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
                vac_stopper = 370      # Don't vaccinate after this day
 )
@@ -117,6 +117,9 @@ inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Va
 
 test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
 test.run$N <- apply(test.run[,c("S","E","I","R","V_total")], 1, sum)
+
+# Check to make sure enough vaccines were given (106,624)
+test.run[nrow(test.run), "Vax"]
 
 # Check to make sure number in pop is stationary
 summary(test.run$N)
@@ -143,9 +146,16 @@ test.run[1:(time_start - time_first), 34:57] <- 0
 
 ggplot() + geom_line(data = test.run, aes(x = time, y = N)) + theme_bw() + xlab("Years") + ylab("N")
 
-# Measure proportion of people on Dec 31, 2016 who had ever received vaccine. 
+# Measure proportion of people in Dec 2016 who had ever received vaccine. 
 # Compare to 40% coverage estimate from survey
 1 - test.run[test.run$time == as.Date("2016-12-01"), "S"]/test.run[test.run$time == as.Date("2016-12-01"), "N"]
+# And on Oct 16...
+1 - test.run[test.run$time == as.Date("2016-10-16"), "S"]/test.run[test.run$time == as.Date("2016-10-16"), "N"]
+
+# At what time did prob(outbreak) exceed 50%?
+prob_outbreak_fcn(1.3419, 10)
+threshold_R <- 1.3419
+test.run[test.run$Re*1.80 > threshold_R & test.run$time > as.Date("2015-06-02") ,"time"][1]
 
 # Calculate X(t) on Oct 16
 (X_Oct_16 <- 100*(test.run[test.run$time > "2016-10-16","Re"][1]))
@@ -240,11 +250,11 @@ params <- list(beta=1/2,                # Daily transmission parameter. From Gui
                VE=VE_counterfactual,                         # Vaccine efficacy over time
                V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
                vac_routine_count = 0,        # Number of courses given each day
-               vac_mass_freq = floor(365*11/12),         # Days between mass re-vaccination campaigns
+               vac_mass_freq = floor(365*12/12),         # Days between mass re-vaccination campaigns
                vac_mass_frac = 0.9,           # Fraction of the population revaccinated during mass revaccination campaigns
                vac_birth_frac = 0,            # Fraction of babies vaccinated
                vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
-               vac_max = 113426,                 # Maximum number of vaccine courses to be given
+               vac_max = 113226,                 # Maximum number of vaccine courses to be given
                vac_recip = c("mass_all"),     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
                vac_stopper = 370      # Don't vaccinate after this day
 )
@@ -256,6 +266,9 @@ inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Va
 
 test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
 test.run$N <- apply(test.run[,c("S","E","I","R","V_total")], 1, sum)
+
+# Check to make sure enough vaccines were given (106,624)
+test.run[nrow(test.run), "Vax"]
 
 # Check to make sure number in pop is stationary
 summary(test.run$N)
@@ -318,11 +331,11 @@ params <- list(beta=1/2,                # Daily transmission parameter. From Gui
                VE=VE,                         # Vaccine efficacy over time
                V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
                vac_routine_count = 0,        # Number of courses given each day
-               vac_mass_freq = floor(365*11/12),         # Days between mass re-vaccination campaigns
+               vac_mass_freq = floor(365*12/12),         # Days between mass re-vaccination campaigns
                vac_mass_frac = 0.9,           # Fraction of the population revaccinated during mass revaccination campaigns
                vac_birth_frac = 0,            # Fraction of babies vaccinated
                vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
-               vac_max = 113426,                 # Maximum number of vaccine courses to be given
+               vac_max = 113226,                 # Maximum number of vaccine courses to be given
                vac_recip = c("mass_all"),     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
                vac_stopper = 370      # Don't vaccinate after this day
 )
@@ -335,13 +348,13 @@ inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Va
 test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
 test.run$N <- apply(test.run[,c("S","E","I","R","V_total")], 1, sum)
 
+# Check to make sure enough vaccines were given (106,624)
+test.run[nrow(test.run), "Vax"]
+
 # Check to make sure number in pop is stationary
 summary(test.run$N)
 # plot(apply(test.run[,c("S","E","I","R","V_total")], 1, sum), type = "l")
 ggplot(test.run, aes(x = time/365, y = N)) + geom_line() + theme_bw() + xlab("Years") + ylab("N")
-
-# Check to make sure enough vaccines were given (106,624)
-test.run[nrow(test.run), "Vax"]
 
 # Add the first few months pre-vaccination
 time_first <- as.numeric(as.Date("2014-02-01"))
@@ -397,11 +410,11 @@ params <- list(beta=1/2,                # Daily transmission parameter. From Gui
                VE=VE_counterfactual,                         # Vaccine efficacy over time
                V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
                vac_routine_count = 0,        # Number of courses given each day
-               vac_mass_freq = floor(365*11/12),         # Days between mass re-vaccination campaigns
+               vac_mass_freq = floor(365*12/12),         # Days between mass re-vaccination campaigns
                vac_mass_frac = 0.9,           # Fraction of the population revaccinated during mass revaccination campaigns
                vac_birth_frac = 0,            # Fraction of babies vaccinated
                vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
-               vac_max = 113526,                 # Maximum number of vaccine courses to be given
+               vac_max = 113226,                 # Maximum number of vaccine courses to be given
                vac_recip = c("mass_all"),     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
                vac_stopper = 370      # Don't vaccinate after this day
 )
@@ -414,13 +427,13 @@ inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Va
 test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
 test.run$N <- apply(test.run[,c("S","E","I","R","V_total")], 1, sum)
 
+# Check to make sure enough vaccines were given (106,624)
+test.run[nrow(test.run), "Vax"]
+
 # Check to make sure number in pop is stationary
 summary(test.run$N)
 # plot(apply(test.run[,c("S","E","I","R","V_total")], 1, sum), type = "l")
 ggplot(test.run, aes(x = time/365, y = N)) + geom_line() + theme_bw() + xlab("Years") + ylab("N")
-
-# Check to make sure enough vaccines were given (106,624)
-test.run[nrow(test.run), "Vax"]
 
 # Add the first few months pre-vaccination
 time_first <- as.numeric(as.Date("2014-02-01"))
@@ -478,11 +491,11 @@ params <- list(beta=1/2,                # Daily transmission parameter. From Gui
                VE=VE_counterfactual,                         # Vaccine efficacy over time
                V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
                vac_routine_count = 0,        # Number of courses given each day
-               vac_mass_freq = floor(365*11/12),         # Days between mass re-vaccination campaigns
+               vac_mass_freq = floor(365*12/12),         # Days between mass re-vaccination campaigns
                vac_mass_frac = 0.9,           # Fraction of the population revaccinated during mass revaccination campaigns
                vac_birth_frac = 0,            # Fraction of babies vaccinated
                vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
-               vac_max = 113426,                 # Maximum number of vaccine courses to be given
+               vac_max = 113226,                 # Maximum number of vaccine courses to be given
                vac_recip = c("mass_all"),     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
                vac_stopper = 370      # Don't vaccinate after this day
 )
@@ -494,6 +507,9 @@ inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Va
 
 test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
 test.run$N <- apply(test.run[,c("S","E","I","R","V_total")], 1, sum)
+
+# Check to make sure enough vaccines were given (106,624)
+test.run[nrow(test.run), "Vax"]
 
 # Check to make sure number in pop is stationary
 summary(test.run$N)
@@ -550,11 +566,11 @@ params <- list(beta=1/2,                # Daily transmission parameter. From Gui
                VE=VE_counterfactual,                         # Vaccine efficacy over time
                V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
                vac_routine_count = 0,        # Number of courses given each day
-               vac_mass_freq = floor(365*11/12),         # Days between mass re-vaccination campaigns
+               vac_mass_freq = floor(365*12/12),         # Days between mass re-vaccination campaigns
                vac_mass_frac = 0.9,           # Fraction of the population revaccinated during mass revaccination campaigns
                vac_birth_frac = 0,            # Fraction of babies vaccinated
                vac_mig_frac = 0,              # Fraction of immigrants vaccinated upon arrival
-               vac_max = 112526,                 # Maximum number of vaccine courses to be given
+               vac_max = 113236,                 # Maximum number of vaccine courses to be given
                vac_recip = c("mass_all"),     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
                vac_stopper = 370      # Don't vaccinate after this day
 )
@@ -566,6 +582,9 @@ inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Va
 
 test.run <- run_model(inits = inits, func = SIRV.generic, times = times, params = params)
 test.run$N <- apply(test.run[,c("S","E","I","R","V_total")], 1, sum)
+
+# Check to make sure enough vaccines were given (106,624)
+test.run[nrow(test.run), "Vax"]
 
 # Check to make sure number in pop is stationary
 summary(test.run$N)
