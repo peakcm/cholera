@@ -160,8 +160,8 @@ test.run[test.run$Re*1.80 > threshold_R & test.run$time > as.Date("2015-06-02") 
 # Calculate X(t) on Oct 16
 (X_Oct_16 <- 100*(test.run[test.run$time > "2016-10-16","Re"][1]))
 
-# Calculate probability of outbreak > 50 on oct 16
-R0 <- 1.75
+# Calculate probability of outbreak > 10 on oct 16
+R0 <- 1.80
 (Re_Oct_16 <- R0 * X_Oct_16/100)
 prob_outbreak_fcn(Re_Oct_16, 10)
 
@@ -179,10 +179,10 @@ ggplot(test.run, aes(x = time)) +
 ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date") + ylab("Number of Vaccine Courses Given") + scale_y_continuous(limits = c(0, max(test.run$Vax))) +  scale_x_date(date_labels = "%b '%y") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 #### Plot probability of an outbreak over time ####
-df_prob_outbreak <- data.frame(time = rep(test.run$time, 4), X_t = rep(test.run$Re,4), R_0 = rep(c(1, 1.5, 1.75, 2), each = nrow(test.run)), prob_outbreak_10 = NA)
+df_prob_outbreak <- data.frame(time = rep(test.run$time, 4), X_t = rep(test.run$Re,4), R_0 = rep(c(1, 1.5, 1.8, 2), each = nrow(test.run)), prob_outbreak_10 = NA)
 df_prob_outbreak$prob_outbreak_10 <- prob_outbreak_fcn(R = df_prob_outbreak$X_t * df_prob_outbreak$R_0)
 
-df_prob_outbreak$R_0 <- factor(df_prob_outbreak$R_0, levels = c(2, 1.75, 1.5, 1), ordered = TRUE)
+df_prob_outbreak$R_0 <- factor(df_prob_outbreak$R_0, levels = c(2, 1.80, 1.5, 1), ordered = TRUE)
 
 # 3 main ggplot colors 
 colors = c("#F8766D99", "black", "#00BA3899", "#619CFF99")
