@@ -7,9 +7,10 @@ library(ggplot2)
 library(reshape2)
 
 #### Vaccine time series ####
+VE_0 <- 0.75 #Initial VE
 time_points <- 365*1 # 10 years
 
-V_all_or_none <- exp(-5*(0:time_points)/time_points)
+V_all_or_none <- exp(-5*(0:time_points)/time_points) * VE_0
 VE_leaky <- V_all_or_none
 
 
@@ -21,7 +22,7 @@ df <- data.frame(time = rep(0:time_points, 2),
                  V = c(V_all_or_none, V_leaky),
                  VE = c(VE_all_or_none, VE_leaky))
 
-df$action <- factor(df$action, labels = c("All or Nothing", "Leaky"))
+df$action <- factor(df$action, labels = c("Failure in Take\n(All or Nothing)", "Failure in Degree\n(Leaky)"))
 
 df$X <- (1-df$V) + df$V*(1-df$VE)  # 1 compartmental model.
 
