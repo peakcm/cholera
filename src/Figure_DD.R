@@ -126,7 +126,7 @@ ggplot() +
   # Formatting
   theme_bw() + ylab("Vaccine Impact\n(decrease in outbreak probability)") + 
   scale_color_brewer(type = "seq", palette = 8, name = "Time since\nVaccination (years)") +
-  scale_x_continuous(breaks = c(0.05, 0.20, 0.333, 0.5, 1/1.5, 1), labels = c("1/20", "1/5", "1/3", "1/2", "1/1.5", "1/1"), name = "Migration Rate (per year)") + theme(text = element_text(size = 6), legend.text=element_text(size=4), legend.title=element_text(size=4), axis.text.x = element_text(size = 8), axis.text.y = element_text(size = 8)) + scale_y_continuous(breaks = c(0, 0.25, 0.5), labels = c("0", "0.25", "0.50"), limits = c(0,0.6)) + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
+  scale_x_continuous(breaks = c(0.05, 0.20, 0.333, 0.5, 1/1.5, 1), labels = c("20", "5", "3", "2", "1.5", "1"), name = "Average Residence Time (years)") + theme(text = element_text(size = 6), legend.text=element_text(size=4), legend.title=element_text(size=4), axis.text.x = element_text(size = 8), axis.text.y = element_text(size = 8)) + scale_y_continuous(breaks = c(0, 0.25, 0.5), labels = c("0", "0.25", "0.50"), limits = c(0,0.6)) + theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())
 
 ggsave(file = "figures/Figure_DD.pdf", width = 4, height = 2, units = "in")
 # ggsave(file = "figures/Figure_DD_Supplement.pdf", width = 4, height = 2, units = "in")
