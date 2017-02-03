@@ -54,9 +54,8 @@ cum_prob_outbreak <- function(years, mig_rate, pop_size, time_step, avg_prob, se
 }
 
 #### Test to make sure this method works for fractional cases on each day ####
-df_test <- data.frame(day = 1:6, Rt =1.1, Ct = c(1,1,0.5, 0.5, 0.5, 0.5), prob_outbreak_t = NA)
-for (i in seq_len(nrow(df_test))){df_test[i, "prob_outbreak_t"] <- 1-(1-prob_outbreak_fcn(R = df_test[i,"Rt"], outbreak_size = outbreak_size))^df_test[i, "Ct"]}
-df_test
-1-prod(1-df_test[1:2, "prob_outbreak_t"])
-1-prod(1-df_test[3:6, "prob_outbreak_t"])
-0
+# df_test <- data.frame(day = 1:6, Rt =1.1, Ct = c(1,1,0.5, 0.5, 0.5, 0.5), prob_outbreak_t = NA)
+# for (i in seq_len(nrow(df_test))){df_test[i, "prob_outbreak_t"] <- 1-(1-prob_outbreak_fcn(R = df_test[i,"Rt"], outbreak_size = outbreak_size))^df_test[i, "Ct"]}
+# df_test
+# 1-prod(1-df_test[1:2, "prob_outbreak_t"])
+# 1-prod(1-df_test[3:6, "prob_outbreak_t"])
