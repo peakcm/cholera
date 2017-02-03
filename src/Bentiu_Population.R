@@ -630,13 +630,13 @@ ggplot(test.run, aes(x = time, y = Vax)) + geom_line() + theme_bw() + xlab("Date
 ## Run Observed simulation for Bentiu
 test.run.observed <- test.run
 
-## Store the number of people in each compartment on May 1, 2015, immediately after mass vaccination
-head(test.run.observed[test.run.observed$time > "2015-04-28",])
-post_vax_state <- test.run.observed[test.run.observed$time == "2015-05-02",]
+## Store the number of people in each compartment on June 1, 2015, immediately after the second mass vaccination campaign
+head(test.run.observed[test.run.observed$time > "2015-05-28",])
+post_vax_state <- test.run.observed[test.run.observed$time == "2015-06-02",]
 post_vax_state$S
 
 ## Mark which time step we're starting the simulation 
-time_sim_start <- which(test.run.observed$time == "2015-05-02") - 120 # subtract 120 days which were added during the linear growth period
+time_sim_start <- which(test.run.observed$time == "2015-06-02") - 120 # subtract 120 days which were added during the linear growth period
 
 ## Initialize a run with the same number in the S compartment, and move the rest of the population into R to ignore them. They can migrate in and out as usual, but we want to keep note of our V compartments on our own.
 
@@ -656,7 +656,7 @@ params <- list(beta=1/2,                # Daily transmission parameter. From Gui
                VE=VE,                         # Vaccine efficacy over time
                V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
                vac_routine_count = 1e5,        # Number of courses given each day
-               vac_mass_freq = 0*floor(365*11/12),         # Days between mass re-vaccination campaigns
+               vac_mass_freq = 0*floor(365*12/12),         # Days between mass re-vaccination campaigns
                vac_mass_frac = 0.9,           # Fraction of the population revaccinated during mass revaccination campaigns
                vac_birth_frac = 0,            # Fraction of babies vaccinated
                vac_mig_frac = 1,              # Fraction of immigrants vaccinated upon arrival
@@ -678,18 +678,27 @@ tail(test.run)
 
 # Check to make sure number in pop is stationary
 summary(test.run$N)
-# plot(apply(test.run[,c("S","E","I","R","V_total")], 1, sum), type = "l")
 ggplot(test.run, aes(x = time/365, y = N)) + geom_line() + theme_bw() + xlab("Years") + ylab("N")
+ggplot(test.run, aes(x = time/365, y = S)) + geom_line() + theme_bw() + xlab("Years") + ylab("S")
 
 test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
 
+# Measure number of vaccines used during routine vaccination
+tail(test.run.observed,1)["Vax"] # 106,624 vaccines consumed by mass campaigns
+tail(test.run,1)["Vax"] - head(test.run,1)["Vax"] # 55,628 vaccines consumed by routine vaccination of immigrants
+
 ## To create a final, blended, simualtion, add the V people from June 1, 2015 and onward back to the simulation just run (after removing R people)
 test.run.blended <- test.run.observed
-test.run.blended[test.run.blended$time >= "2015-05-02","S"] <-  test.run$S
-test.run.blended[test.run.blended$time >= "2015-05-02",3:50] <-  test.run.blended[test.run.blended$time >= "2015-05-02",3:50] + test.run[,3:50]
+test.run.blended[test.run.blended$time >= "2015-06-02","S"] <-  test.run$S
+test.run.blended[test.run.blended$time >= "2015-06-02",3:50] <-  test.run.blended[test.run.blended$time >= "2015-06-02",3:50] + test.run[,3:50]
 
 test.run.blended$V_total_New <- apply(test.run.blended[,3:50], 1, sum)
 test.run.blended$N_new <- apply(test.run.blended[,c("S","E","I","R","V_total_New")], 1, sum)
+
+ggplot() +
+  geom_line(data = test.run, aes(x=time+time_sim_start+120,y = N), lty = "dotted", size = 2, col = "blue") +
+  geom_line(data = test.run.blended, aes(x=time,y = N_new), lty = "dashed", size = 1.5) +
+  geom_line(data = test.run.observed, aes(x = time, y = N), col = "red")
 
 test.run.blended$X_t <- apply(test.run.blended, 1, function(x) sum(as.numeric(x["S"]), sum(as.numeric(x[3:(params$n.comps.V+2)])*(1-params$VE))) / sum(as.numeric(x[2:(2+params$n.comps.V+3)])))
 test.run.blended$Re_1.5 <- test.run.blended$X_t*1.5
@@ -714,20 +723,7 @@ ggplot() + geom_line(data = test.run.blended[test.run.blended$time > "2015-05-02
 
 ggsave(file = "figures/Figure_GG_Xt_vaxmigrants.pdf", width = 4, height = 1.5, units = "in")
 
- #### Run Counterfactual simulation for Bentiu if we vaccinated 100% of immigrants and births ####
-
-## Run Observed simulation for Bentiu
-test.run.observed <- test.run
-
-## Store the number of people in each compartment on May 1, 2015, immediately after mass vaccination
-head(test.run.observed[test.run.observed$time > "2015-04-28",])
-post_vax_state <- test.run.observed[test.run.observed$time == "2015-05-02",]
-post_vax_state$S
-
-## Mark which time step we're starting the simulation 
-time_sim_start <- which(test.run.observed$time == "2015-05-02") - 120 # subtract 120 days which were added during the linear growth period
-
-## Initialize a run with the same number in the S compartment, and move the rest of the population into R to ignore them. They can migrate in and out as usual, but we want to keep note of our V compartments on our own.
+#### Run Counterfactual simulation for Bentiu if we vaccinated 100% of immigrants and births ####
 
 params <- list(beta=1/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
                beta_shape = "constant",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
@@ -745,12 +741,12 @@ params <- list(beta=1/2,                # Daily transmission parameter. From Gui
                VE=VE,                         # Vaccine efficacy over time
                V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
                vac_routine_count = 1e5,        # Number of courses given each day
-               vac_mass_freq = 0*floor(365*11/12),         # Days between mass re-vaccination campaigns
+               vac_mass_freq = 0*floor(365*12/12),         # Days between mass re-vaccination campaigns
                vac_mass_frac = 0.9,           # Fraction of the population revaccinated during mass revaccination campaigns
                vac_birth_frac = 1,            # Fraction of babies vaccinated
                vac_mig_frac = 1,              # Fraction of immigrants vaccinated upon arrival
                vac_max = 174288,                 # Maximum number of vaccine courses to be given
-               vac_recip = c("migrant"),     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
+               vac_recip = c("migrant", "birth"),     # Recipients of vaccination ("routine_S","routine_all", "mass_all", "mass_S", "migrant", "birth")
                vac_stopper = 1e5      # Don't vaccinate after this day
 )
 
@@ -772,10 +768,14 @@ ggplot(test.run, aes(x = time/365, y = N)) + geom_line() + theme_bw() + xlab("Ye
 
 test.run$time <- as.Date(test.run$time, origin = "2014-02-01")
 
+# Measure number of vaccines used during routine vaccination
+tail(test.run.observed,1)["Vax"] # vaccines consumed by mass campaigns
+tail(test.run,1)["Vax"] - head(test.run,1)["Vax"] # vaccines consumed by routine vaccination of immigrants and births
+
 ## To create a final, blended, simualtion, add the V people from June 1, 2015 and onward back to the simulation just run (after removing R people)
 test.run.blended <- test.run.observed
-test.run.blended[test.run.blended$time >= "2015-05-02","S"] <-  test.run$S
-test.run.blended[test.run.blended$time >= "2015-05-02",3:50] <-  test.run.blended[test.run.blended$time >= "2015-05-02",3:50] + test.run[,3:50]
+test.run.blended[test.run.blended$time >= "2015-06-02","S"] <-  test.run$S
+test.run.blended[test.run.blended$time >= "2015-06-02",3:50] <-  test.run.blended[test.run.blended$time >= "2015-06-02",3:50] + test.run[,3:50]
 
 test.run.blended$V_total_New <- apply(test.run.blended[,3:50], 1, sum)
 test.run.blended$N_new <- apply(test.run.blended[,c("S","E","I","R","V_total_New")], 1, sum)

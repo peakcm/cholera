@@ -34,13 +34,6 @@ SIRV.generic <- function(t,
   ## force of infection (partitioned)
   lambda <- as.numeric(params$beta * I/N * beta_t_fcn(t, params$beta_shape, params$beta_amp, params$beta_phase_shift))
   
-  ## revaccination
-  if ("revaccination_log_trans" %in% names(params)){ # Added this feature much later, so this check will make sure it only applies when I define it.
-    revax_out <- revaccination(t = t, N = N, S = S, V.states.vector =  V.states.vector, Vax =  Vax, vac_routine_count = params$vac_routine_count, vac_mass_freq =  params$vac_mass_freq, vac_mass_frac = params$vac_mass_frac, vac_mig_frac = params$vac_mig_frac, vac_recip = params$vac_recip, vac_max = params$vac_max, birth_rate = params$birth_death_rate, mig_in = params$mig_in, vac_birth_frac = params$vac_birth_frac, vac_stopper = params$vac_stopper, revaccination_log_trans = params$revaccination_log_trans)
-  } else {
-    revax_out <- revaccination(t = t, N = N, S = S, V.states.vector =  V.states.vector, Vax =  Vax, vac_routine_count = params$vac_routine_count, vac_mass_freq =  params$vac_mass_freq, vac_mass_frac = params$vac_mass_frac, vac_mig_frac = params$vac_mig_frac, vac_recip = params$vac_recip, vac_max = params$vac_max, birth_rate = params$birth_death_rate, mig_in = params$mig_in, vac_birth_frac = params$vac_birth_frac, vac_stopper = params$vac_stopper)
-    }
-  
   ## Update migration rates
   if (params$mig_rates_constant == TRUE){
     mig_in <- params$mig_in
@@ -49,6 +42,13 @@ SIRV.generic <- function(t,
     mig_in <- migration_rate_calculator(t = t, rate_vector = params$mig_in)
     mig_out <- migration_rate_calculator(t = t, rate_vector = params$mig_out)
   }
+  
+  ## revaccination
+  if ("revaccination_log_trans" %in% names(params)){ # Added this feature much later, so this check will make sure it only applies when I define it.
+    revax_out <- revaccination(t = t, N = N, S = S, V.states.vector =  V.states.vector, Vax =  Vax, vac_routine_count = params$vac_routine_count, vac_mass_freq =  params$vac_mass_freq, vac_mass_frac = params$vac_mass_frac, vac_mig_frac = params$vac_mig_frac, vac_recip = params$vac_recip, vac_max = params$vac_max, birth_rate = params$birth_death_rate, mig_in = mig_in, vac_birth_frac = params$vac_birth_frac, vac_stopper = params$vac_stopper, revaccination_log_trans = params$revaccination_log_trans)
+  } else {
+    revax_out <- revaccination(t = t, N = N, S = S, V.states.vector =  V.states.vector, Vax =  Vax, vac_routine_count = params$vac_routine_count, vac_mass_freq =  params$vac_mass_freq, vac_mass_frac = params$vac_mass_frac, vac_mig_frac = params$vac_mig_frac, vac_recip = params$vac_recip, vac_max = params$vac_max, birth_rate = params$birth_death_rate, mig_in = mig_in, vac_birth_frac = params$vac_birth_frac, vac_stopper = params$vac_stopper)
+    }
   
   ## vaccine waning
   dV.states <- rep(0, params$n.comps.V)
