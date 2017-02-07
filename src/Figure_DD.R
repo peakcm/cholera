@@ -31,15 +31,15 @@ avg_prob = 1/pop_size # yearly average prob that immigrant is infected
 seasonal_amp = 0 # 0 if no seasonality. 1 if doubles
 R = 1.5 # yearly average
 outbreak_size = 10 # min cases for outbreak definition
-vaccine_choice = "None"
+# vaccine_choice = "None"
 # vaccine_choice = "Shanchol"
-# vaccine_choice = "Dukoral"
+vaccine_choice = "Dukoral"
 # vaccine_choice = "Perfect
 
 cum_prob_outbreak(years = years, mig_rate = mig_rate, pop_size = pop_size, time_step = time_step, avg_prob = avg_prob, seasonal_amp = seasonal_amp, R = R, outbreak_size = outbreak_size, vaccine_choice = vaccine_choice)
 
 #### Single Loop through migration rates ####
-vaccine_choices = c("None", "Shanchol")
+vaccine_choices = c("None", "Dukoral")
 # vaccine_choices = c("None", "Perfect")
 
 mig_rate_choices = seq(0, 1/1, length.out = 40)
@@ -53,7 +53,7 @@ for (i in 1:nrow(df_single)){
 
 df_single_diff <- data.frame(mig_rate = mig_rate_choices, diff = NA)
 for (i in 1:nrow(df_single_diff)){
-  df_single_diff[i, "diff"] <- df_single[df_single$vaccine_choice == "None" & df_single$mig_rate == df_single_diff[i,"mig_rate"], "prob_outbreak"] - df_single[df_single$vaccine_choice == "Shanchol" & df_single$mig_rate == df_single_diff[i,"mig_rate"], "prob_outbreak"]
+  df_single_diff[i, "diff"] <- df_single[df_single$vaccine_choice == "None" & df_single$mig_rate == df_single_diff[i,"mig_rate"], "prob_outbreak"] - df_single[df_single$vaccine_choice == "Dukoral" & df_single$mig_rate == df_single_diff[i,"mig_rate"], "prob_outbreak"]
   # df_single_diff[i, "diff"] <- df_single[df_single$vaccine_choice == "None" & df_single$mig_rate == df_single_diff[i,"mig_rate"], "prob_outbreak"] - df_single[df_single$vaccine_choice == "Perfect" & df_single$mig_rate == df_single_diff[i,"mig_rate"], "prob_outbreak"]
   
 }
@@ -79,8 +79,8 @@ horizons <- c(2, 3, 4, 5, 6)
 df <- NA
 df_diff <- NA
 for (years in horizons){
-  # vaccine_choices = c("None", "Shanchol")
-  vaccine_choices = c("None", "Perfect")
+  vaccine_choices = c("None", "Dukoral")
+  # vaccine_choices = c("None", "Perfect")
   
   mig_rate_choices = seq(0, 1/1, length.out = 20)
   
@@ -93,7 +93,7 @@ for (years in horizons){
   
   df_temp_diff <- data.frame(mig_rate = mig_rate_choices, diff = NA)
   for (i in 1:nrow(df_temp_diff)){
-    df_temp_diff[i, "diff"] <- df_temp[df_temp$vaccine_choice == "None" & df_temp$mig_rate == df_temp_diff[i,"mig_rate"], "prob_outbreak"] - df_temp[df_temp$vaccine_choice == "Shanchol" & df_temp$mig_rate == df_temp_diff[i,"mig_rate"], "prob_outbreak"]
+    df_temp_diff[i, "diff"] <- df_temp[df_temp$vaccine_choice == "None" & df_temp$mig_rate == df_temp_diff[i,"mig_rate"], "prob_outbreak"] - df_temp[df_temp$vaccine_choice == "Dukoral" & df_temp$mig_rate == df_temp_diff[i,"mig_rate"], "prob_outbreak"]
     # df_temp_diff[i, "diff"] <- df_temp[df_temp$vaccine_choice == "None" & df_temp$mig_rate == df_temp_diff[i,"mig_rate"], "prob_outbreak"] - df_temp[df_temp$vaccine_choice == "Perfect" & df_temp$mig_rate == df_temp_diff[i,"mig_rate"], "prob_outbreak"]
 
   }
