@@ -135,6 +135,13 @@ for (row in seq_len(sims)){
 plot(fig_FF_df$Re[[1]], type = "l")
 plot(fig_FF_df$prob_outbreak_10[[1]], type = "l")
 
+# Check vaccine consumption
+for (i in 1:nrow(fig_FF_df)){
+  cat(tail(fig_FF_df$Vax[[i]],1), " total vaccines consumed")
+  plot(fig_FF_df$Vax[[i]], main = paste(i))
+  readline(prompt="Press [enter] to continue")
+}
+
 #### Prep for ggplot ####
 fig_FF_df_melt <- data.frame(times = rep(times, sims), Re = NA, prob_outbreak_10 = NA,  strategy = NA, vac_mass_frac_condition = NA, vac_mass_freq_condition = NA, vac_routine_count_condition = NA, mig_condition = NA, DHI = FALSE)
 
