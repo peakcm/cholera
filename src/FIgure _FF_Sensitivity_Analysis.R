@@ -213,7 +213,7 @@ for (i in 1:nrow(settings)){
   fig_FF_df[fig_FF_df$mig_conditions == mig & 
               fig_FF_df$R0_conditions == R0 &
               fig_FF_df$strategy == "Mass",]$keep[which_max] <- 1
-  
+  cat(".")
 }
 
 fig_FF_df <- fig_FF_df[fig_FF_df$keep == 1,]
