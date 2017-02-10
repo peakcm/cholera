@@ -16,7 +16,8 @@
 expected_migrants <- function(mig_rate, pop_size, time_step){
   # mig_rate is per year
   # time is days
-  pop_size* (1-exp(-1*mig_rate*time_step/365))
+  # pop_size* (1-exp(-1*mig_rate*time_step/365)) # Old method
+  pop_size* (exp(mig_rate*time_step/365)-1) # New method
 }
 
 #### Function (B) ####
@@ -54,6 +55,7 @@ cum_prob_outbreak <- function(years, mig_rate, pop_size, time_step, avg_prob, se
 }
 
 #### Test to make sure this method works for fractional cases on each day ####
+# outbreak_size = 10
 # df_test <- data.frame(day = 1:6, Rt =1.1, Ct = c(1,1,0.5, 0.5, 0.5, 0.5), prob_outbreak_t = NA)
 # for (i in seq_len(nrow(df_test))){df_test[i, "prob_outbreak_t"] <- 1-(1-prob_outbreak_fcn(R = df_test[i,"Rt"], outbreak_size = outbreak_size))^df_test[i, "Ct"]}
 # df_test
