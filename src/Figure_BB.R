@@ -16,6 +16,7 @@ source("src/prob_outbreak_fcn.R")
 source("src/SIRV_model.R")
 source("src/Run_SIRV_model.R")
 source("src/set_panel_size.R")
+source("src/revaccination.R")
 require(ggplot2)
 require(data.table)
 
@@ -56,7 +57,7 @@ for (row in seq_len(sims)){
   # Create params
   params <- list(beta=fig_BB_df$R0_condition[row]/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
                  beta_shape = "sinusoidal",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
-                 beta_amp = 0.05,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
+                 beta_amp = 0.00,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
                  beta_phase_shift = 0,          # Phase shift in a sinusoidal seasonal forcing function
                  gamma=1/2,                     # Duration of disease
                  sigma=1/1.4,                   # Incubation period
@@ -64,11 +65,12 @@ for (row in seq_len(sims)){
                  nat_wane=0*1/(365*10),         # Rate of natural immunity waning
                  mig_in= fig_BB_df$mig_condition[row],             # Rate of immigration
                  mig_out=fig_BB_df$mig_condition[row],             # Rate of emigration
+                 mig_rates_constant = TRUE,
                  foreign_infection=0.00,        # Proportion of immigrants who are infected
                  n.comps.V=n.comps.V,           # Number of V compartments
                  VE=fig_BB_df$VE_condition[row][[1]],                         # Vaccine efficacy over time
                  V_step=V_comps_per_month/30.5, # Average time in each vaccine compartment is one month
-                 vac_routine_frac = 0.00,          # Fraction of the current S pop that is vaccinated on each day
+                 vac_routine_count = 0,        # Number of courses given each day
                  vac_mass_freq = 0,         # Days between mass re-vaccination campaigns
                  vac_mass_frac = 0,           # Fraction of the population revaccinated during mass revaccination campaigns
                  vac_birth_frac = 0,            # Fraction of babies vaccinated
