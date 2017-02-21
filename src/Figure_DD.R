@@ -1,6 +1,7 @@
 #### Figure DD ####
 setwd("/Users/peakcm/Dropbox/Cholera Amanda/cholera_waning")
 source("src/vax_targeting.R")
+source("src/calculate_VE.R")
 library(ggplot2)
 
 #### Load workspace ####

@@ -6,7 +6,7 @@ Create_VE <- function(timesteps_per_month,VE_shape = "Shanchol",bound=TRUE, max_
   if (VE_shape == "Shanchol"){
     input <- matrix(c(0,6,12,18,24,30,36,42,48,.430,.525,.579,.583,.538,.438,.245,-.073,-.590),nrow=9)
   } else if (VE_shape == "Dukoral"){
-    input <- matrix(c(0,6,12,18,24,30,36,42,48,.713,.650,.572,.476,.374,.280,.202,.141,.092),nrow=9)
+    input <- matrix(c(0,6,12,18,24,30,36,42,48,54,60,.713,.650,.572,.476,.374,.280,.202,.141,.092,0.046,0),nrow=11)
   } else if (VE_shape == "Linear"){
     input <- matrix(c(0, max_V_months, .713, 0), nrow = 2)
   } else if (VE_shape == "Custom"){
@@ -45,6 +45,6 @@ Create_VE <- function(timesteps_per_month,VE_shape = "Shanchol",bound=TRUE, max_
 
 # Create Shancol and Dukoral Estimates
 # Shanchol <- matrix(c(0,6,12,18,24,30,36,42,48,.430,.525,.579,.583,.538,.438,.245,-.073,-.590),nrow=9)
-# Dukoral  <- matrix(c(0,6,12,18,24,30,36,42,48,.713,.650,.572,.476,.374,.280,.202,.141,.092),nrow=9)
+# Dukoral  <- matrix(c(0,6,12,18,24,30,36,42,48,54,60,.713,.650,.572,.476,.374,.280,.202,.141,.092,0.046,0),nrow=11)
 # VE_Shanchol <- Create_VE(timesteps_per_month = 1,VE_shape = "Shanchol",bound = TRUE, max_V_months = 60)
 # VE_Dukoral  <- Create_VE(timesteps_per_month = 1,VE_shape = "Dukoral",bound = TRUE, max_V_months = 60)
