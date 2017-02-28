@@ -24,17 +24,17 @@ VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Shanchol",b
 # VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Dukoral",bound = TRUE,max_V_months = max_V_months)
 # VE <- Create_VE(timesteps_per_month = V_comps_per_month, VE_shape = "Perfect", bound = TRUE, max_V_months = max_V_months)
 
-params <- list(beta=0.6538415,                # Daily transmission parameter. From Guinea, beta=0.6538415
+params <- list(beta=0.35,                # Daily transmission parameter. From Guinea, beta=0.6538415
                beta_shape = "constant",       # Shape of the seasonal forcing function. "constant" or "sinusoidal"
                beta_amp = 0.05,               # Amplitude of sinusoidal seasonal forcing function (0 if no change, 1 if doubles)
                beta_phase_shift = 0,          # Phase shift in a sinusoidal seasonal forcing function
                gamma=1/2,                     # Duration of disease
-               sigma=1/1.4,                   # Incubation period
-               birth_death_rate=1/(365*40),   # Average birth and death rate
+               sigma=1/1.4*1000,                   # Incubation period
+               birth_death_rate=1/(365*40)*0,   # Average birth and death rate
                nat_wane=0*1/(365*10),         # Rate of natural immunity waning
                mig_rates_constant = TRUE,      # TRUE if migration rates are constant
-               mig_in= 1/(365*3.6),             # Rate of immigration
-               mig_out= 1/(365*4.6),             # Rate of emigration
+               mig_in= 1/(365*3.6)*0,             # Rate of immigration
+               mig_out= 1/(365*4.6)*0,             # Rate of emigration
                foreign_infection=0.00,        # Proportion of immigrants who are infected
                n.comps.V=n.comps.V,           # Number of V compartments
                VE=VE,                         # Vaccine efficacy over time
@@ -50,9 +50,9 @@ params <- list(beta=0.6538415,                # Daily transmission parameter. Fr
                
 )
 inits = rep(0, 7+params$n.comps.V)
-inits[1] = 3057 # initially susceptible
-inits[2] = 73360 # initially vaccinated
-inits[params$n.comps.V+3] = 0 # initially infected
+inits[1] = 990 # initially susceptible
+inits[2] = 0 # initially vaccinated
+inits[params$n.comps.V+3] = 10 # initially infected
 inits[7+params$n.comps.V] = inits[2] #Count those initially vaccinated in the Vax compartment
 
 #### Test function ####
@@ -83,3 +83,20 @@ ggplot(test.run, aes(x = time/365, y = Vax)) + geom_line() + theme_bw() + xlab("
 #### Summarize results ####
 (return_to_R0 <- which(round(test.run$Re,3) >= 0.95*round(params$beta/params$gamma, 3))[1] / 365)
 (DHI <- sum(round(test.run$Re,3) < 1)/365)
+
+
+#### Plot simple epi curves ####
+test.run_bigR <- test.run
+test.run_smallR <- test.run
+
+ggplot() +
+  geom_line(data = test.run_bigR, aes(y=I, x = time/365), col="red") +
+  geom_line(data = test.run_smallR, aes(y=I, x = time/365), col="blue") +
+  geom_hline(yintercept = 10, col = "black", lty = "dashed") +
+  theme_classic() + xlab("Time") + scale_x_continuous(breaks = seq(0, 1, 1), limits = c(0, 0.2)) +
+  ylab("Cases") + scale_y_continuous(breaks = seq(0, 50, 10))
+ggsave(file = "/Users/peakcm/Desktop/Epi_Curve.pdf", width = 3, height = 3, units = "in")
+ggsave(file = "/Users/peakcm/Desktop/Epi_Curve_red.pdf", width = 3, height = 3, units = "in")
+ggsave(file = "/Users/peakcm/Desktop/Epi_Curve_red_black.pdf", width = 3, height = 3, units = "in")
+
+
