@@ -702,10 +702,13 @@ ggplot() +
 
 test.run.blended$X_t <- apply(test.run.blended, 1, function(x) sum(as.numeric(x["S"]), sum(as.numeric(x[3:(params$n.comps.V+2)])*(1-params$VE))) / sum(as.numeric(x[2:(2+params$n.comps.V+3)])))
 test.run.blended$Re_1.5 <- test.run.blended$X_t*1.5
-test.run.blended$Re_1.75 <- test.run.blended$X_t*1.75
+test.run.blended$Re_1.8 <- test.run.blended$X_t*1.8
 test.run.blended$Re_2 <- test.run.blended$X_t*2
 
-test.run.blended$prob_outbreak_10_1.75 <- prob_outbreak_fcn(R = test.run.blended$Re_1.75, outbreak_size = 10)
+test.run.blended$prob_outbreak_10_1 <- prob_outbreak_fcn(R = test.run.blended$X_t, outbreak_size = 10)
+test.run.blended$prob_outbreak_10_1.5 <- prob_outbreak_fcn(R = test.run.blended$Re_1.5, outbreak_size = 10)
+test.run.blended$prob_outbreak_10_1.8 <- prob_outbreak_fcn(R = test.run.blended$Re_1.8, outbreak_size = 10)
+test.run.blended$prob_outbreak_10_2 <- prob_outbreak_fcn(R = test.run.blended$Re_2, outbreak_size = 10)
 
 head(test.run.blended)
 tail(test.run.blended)
@@ -720,9 +723,34 @@ ggplot() + geom_line(data = test.run.blended[test.run.blended$time > "2015-05-02
   theme_bw() + xlab("Date") + ylab("X(t)") + ylim(0,1) + 
   scale_x_date(date_labels = "%b %Y", limits = as.Date(c("2014-01-01", "2017-02-01"))) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + theme(panel.grid.minor = element_blank()) + theme(text = element_text(size=10), legend.text=element_text(size=10), legend.title=element_text(size=10))
-
 ggsave(file = "figures/Figure_GG_Xt_vaxmigrants.pdf", width = 4, height = 1.5, units = "in")
 
+# Plot outbreak probability over time
+colors
+
+ggplot() +
+  geom_line(data = test.run.blended[test.run.blended$time > as.Date("2015-06-01"),], aes(x = time, y = prob_outbreak_10_1), color = colors[4], lty = "dashed") +
+  geom_line(data = test.run.blended[test.run.blended$time > as.Date("2015-06-01"),], aes(x = time, y = prob_outbreak_10_1.5), color = colors[3], lty = "dashed") +
+  geom_line(data = test.run.blended[test.run.blended$time > as.Date("2015-06-01"),], aes(x = time, y = prob_outbreak_10_1.8), color = colors[2], lty = "dashed") +
+  geom_line(data = test.run.blended[test.run.blended$time > as.Date("2015-06-01"),], aes(x = time, y = prob_outbreak_10_2), color = colors[1], lty = "dashed") +
+  
+  geom_line(data = test.run.blended[test.run.blended$time <= as.Date("2015-06-01"),], aes(x = time, y = prob_outbreak_10_1), color = colors[4], lty = "solid") +
+  geom_line(data = test.run.blended[test.run.blended$time <= as.Date("2015-06-01"),], aes(x = time, y = prob_outbreak_10_1.5), color = colors[3], lty = "solid") +
+  geom_line(data = test.run.blended[test.run.blended$time <= as.Date("2015-06-01"),], aes(x = time, y = prob_outbreak_10_1.8), color = colors[2], lty = "solid") +
+  geom_line(data = test.run.blended[test.run.blended$time <= as.Date("2015-06-01"),], aes(x = time, y = prob_outbreak_10_2), color = colors[1], lty = "solid") +
+  
+  theme_bw() +
+  xlab("Date") + 
+  scale_y_continuous(limits = c(0,1), name = "Outbreak\nProbability") +
+  # scale_color_manual(values = colors, name = "Basic Reproductive\nNumber") +
+  # geom_line(data = df_prob_outbreak[df_prob_outbreak$R_0 %in% c("1.75"),], aes(x = time, y = prob_outbreak_10), color = "black", size = .7) +
+  # guides(color = FALSE) +
+  scale_x_date(date_labels = "%b %Y", limits = as.Date(c("2014-01-01", "2017-02-01"))) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme(text = element_text(size=10), legend.text=element_text(size=10), legend.title=element_text(size=10)) +
+  theme(panel.grid.minor = element_blank())
+
+ggsave(file = "figures/Figure_GG_prob_vaximmigrants.pdf", width = 4, height = 1.5, units = "in")
 #### Run Counterfactual simulation for Bentiu if we vaccinated 100% of immigrants and births ####
 
 params <- list(beta=1/2,                # Daily transmission parameter. From Guinea, beta=0.6538415
