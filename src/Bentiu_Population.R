@@ -54,7 +54,7 @@ ggplot(df) +
   geom_ribbon(data = df[is.na(df$outflux)==0,], aes(x = Date, ymin = outflux, ymax = pop), fill = "pink") +
   geom_line(aes(x = Date, y = pop), color = "darkblue") +
   geom_bar(data = df[is.na(df$Vaccine.Doses)==0,], aes(x = Date, y = Vaccine.Doses/2), stat = "identity", width = 6, color = "forestgreen", alpha = .6) +
-  geom_text(data = df[is.na(df$Vaccine.Doses)==0,], aes(x = (Date + 70), y = (Vaccine.Doses/2 - 5000), label = paste(Vaccine.Doses, "\nDoses")), color = "forestgreen", size = 2) +
+  # geom_text(data = df[is.na(df$Vaccine.Doses)==0,], aes(x = (Date + 70), y = (Vaccine.Doses/2 - 5000), label = paste(Vaccine.Doses, "\nDoses")), color = "forestgreen", size = 2) +
   scale_y_continuous(limits = c(0, 1.5e5), breaks = c(0, 5e4, 1e5, 1.5e5), labels = c("0", "50", "100", "150"), name = "Population\n(thousands)") +
   theme_bw() +
   theme( panel.grid.minor = element_blank()) +
