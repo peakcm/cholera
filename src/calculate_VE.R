@@ -30,7 +30,7 @@ Create_VE <- function(timesteps_per_month,VE_shape = "Shanchol",bound=TRUE, max_
     }
   }
   
-  if (nrow(VE) > max_V_months){
+  if (max(VE[,1]) > max_V_months){
     VE <- VE[VE[,1] <= max_V_months,]
   }
   
