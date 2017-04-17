@@ -4,11 +4,12 @@
 # http://lib.myilibrary.com.ezp-prod1.hul.harvard.edu/Open.aspx?id=772197
 
 prob_outbreak_fcn <- function(R, outbreak_size=10, distribution = "Poisson"){
+  # if (min(R) < 0){stop("prob_outbreak_fcn R is less than 0")}
+  
   if (distribution == "Poisson"){
     out = 0
     for (y in seq_len(outbreak_size-1)){
       out <- out + 1/factorial(y-1) * y^(y-2) * R^(y-1) * exp(-y*R)
-
     }
   }
   return(1-out)
